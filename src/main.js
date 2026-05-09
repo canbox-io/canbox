@@ -36,7 +36,7 @@ initI18n().then(() => {
 function initZoomFeature() {
     // 当前缩放比例
     let currentZoom = 1.0;
-    
+
     // 从主进程获取当前缩放比例
     window.api.zoom.get().then(result => {
         if (result.success) {
@@ -46,34 +46,64 @@ function initZoomFeature() {
         console.error('Failed to get zoom factor:', err);
     });
 
-    // 监听滚轮事件
+    // 调整缩放值的辅助函数
+    function adjustZoom(delta) {
+        let newZoom = currentZoom + delta;
+        // 限制范围 0.5 - 2.0
+        newZoom = Math.max(0.5, Math.min(2.0, newZoom));
+        // 保留一位小数
+        newZoom = Math.round(newZoom * 10) / 10;
+
+        if (newZoom !== currentZoom) {
+            currentZoom = newZoom;
+            window.api.zoom.set(currentZoom).then(result => {
+                if (result.success) {
+                    console.log('Zoom factor set to:', currentZoom);
+                }
+            }).catch(err => {
+                console.error('Failed to set zoom factor:', err);
+            });
+        }
+    }
+
+    // 监听滚轮事件 (Ctrl + 滚轮)
     document.addEventListener('wheel', (e) => {
-        // 检查是否按下 Ctrl 键
         if (e.ctrlKey) {
             e.preventDefault();
-            
-            // 根据滚轮方向调整缩放
             const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            let newZoom = currentZoom + delta;
-            
-            // 限制范围 0.5 - 2.0
-            newZoom = Math.max(0.5, Math.min(2.0, newZoom));
-            
-            // 保留一位小数
-            newZoom = Math.round(newZoom * 10) / 10;
-            
-            if (newZoom !== currentZoom) {
-                currentZoom = newZoom;
-                window.api.zoom.set(currentZoom).then(result => {
-                    if (result.success) {
-                        console.log('Zoom factor set to:', currentZoom);
-                    }
-                }).catch(err => {
-                    console.error('Failed to set zoom factor:', err);
-                });
-            }
+            adjustZoom(delta);
         }
     }, { passive: false });
 
-    console.log('Zoom feature initialized (Ctrl + Wheel)');
+    // 监听键盘快捷键
+    document.addEventListener('keydown', (e) => {
+        if (!e.ctrlKey) return;
+
+        // Ctrl++ / Ctrl+= → zoom+0.1
+        if (e.key === '+' || e.key === '=') {
+            e.preventDefault();
+            adjustZoom(0.1);
+        }
+        // Ctrl+- → zoom-0.1
+        else if (e.key === '-' || e.key === '_') {
+            e.preventDefault();
+            adjustZoom(-0.1);
+        }
+        // Ctrl+0 → reset to 1.0
+        else if (e.key === '0') {
+            e.preventDefault();
+            if (currentZoom !== 1.0) {
+                currentZoom = 1.0;
+                window.api.zoom.set(1.0).then(result => {
+                    if (result.success) {
+                        console.log('Zoom factor reset to 1.0');
+                    }
+                }).catch(err => {
+                    console.error('Failed to reset zoom factor:', err);
+                });
+            }
+        }
+    });
+
+    console.log('Zoom feature initialized (Ctrl+Wheel / Ctrl++/-/0)');
 }

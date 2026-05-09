@@ -61,6 +61,8 @@
     "settings": {
         "title": "设置",
         "basicGroup": "基本设置",
+        "zoom": "缩放级别",
+        "zoomReset": "重置",
         "dataPathGroup": "数据路径",
         "logGroup": "日志设置",
         "language": "语言",

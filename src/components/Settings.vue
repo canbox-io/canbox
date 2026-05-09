@@ -49,6 +49,27 @@
                 </div>
             </div>
 
+            <!-- 缩放 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">🔍</span>
+                    {{ $t('settings.zoom') }}
+                </label>
+                <div class="setting-control">
+                    <div class="zoom-control">
+                        <span class="zoom-hint">Ctrl++ / Ctrl+- / Ctrl+0</span>
+                        <div class="zoom-buttons">
+                            <el-button @click="handleZoomMinus" :disabled="zoomStore.factor <= 0.5">-</el-button>
+                            <span class="zoom-value">{{ zoomStore.factor.toFixed(1) }}</span>
+                            <el-button @click="handleZoomPlus" :disabled="zoomStore.factor >= 2.0">+</el-button>
+                            <el-button @click="handleZoomReset" :disabled="zoomStore.factor === 1.0">
+                                {{ $t('settings.zoomReset') }}
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 快捷方式 -->
             <div class="setting-item">
                 <label class="setting-label">
@@ -210,14 +231,18 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
 import { useUpdateStore } from '@/stores/updateStore';
+import { useZoomStore } from '@/stores/zoomStore';
 
 const { t, locale } = useI18n();
 const updateStore = useUpdateStore();
+const zoomStore = useZoomStore();
 
 const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
 const currentFont = ref('default');
 const currentExecutionMode = ref('window');
+
+// 缩放相关（使用 Pinia store）
 
 // 日志查看器配置
 const logRetentionDays = ref(30);
@@ -343,6 +368,24 @@ async function handleExecutionModeChange(mode) {
         message: t('settings.executionModeSetSuccess'),
         type: 'success'
     });
+}
+
+async function handleZoomPlus() {
+    const newZoom = Math.min(2.0, Math.round((zoomStore.factor + 0.1) * 10) / 10);
+    if (newZoom !== zoomStore.factor) {
+        await zoomStore.set(newZoom);
+    }
+}
+
+async function handleZoomMinus() {
+    const newZoom = Math.max(0.5, Math.round((zoomStore.factor - 0.1) * 10) / 10);
+    if (newZoom !== zoomStore.factor) {
+        await zoomStore.set(newZoom);
+    }
+}
+
+async function handleZoomReset() {
+    await zoomStore.reset();
 }
 
 async function selectDirectory() {
@@ -534,6 +577,9 @@ async function loadSettings() {
     const savedExecutionMode = await window.api.execution.getGlobalMode();
     currentExecutionMode.value = savedExecutionMode || 'window';
 
+    // 初始化 zoom store（会在内部获取初始值并监听变化）
+    await zoomStore.init();
+
     const pathResult = await window.api.userData.getCurrentPath();
     if (pathResult.success) {
         currentDataPath.value = pathResult.path;
@@ -672,6 +718,31 @@ onUnmounted(() => {
 /* 日志保留天数数字 */
 .log-days-input {
     width: 80px;
+}
+
+/* 缩放控制 */
+.zoom-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.zoom-hint {
+    font-size: 12px;
+    color: #909399;
+}
+
+.zoom-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zoom-value {
+    font-size: 16px;
+    font-weight: 500;
+    min-width: 40px;
+    text-align: center;
 }
 
 /* 帮助问号图标 */

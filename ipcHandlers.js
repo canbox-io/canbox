@@ -640,9 +640,10 @@ function initIpcHandlers() {
             BrowserWindow.getAllWindows().forEach(win => {
                 if (!win.isDestroyed()) {
                     win.webContents.setZoomFactor(clampedFactor);
+                    win.webContents.send('zoom-changed', clampedFactor);
                 }
             });
-            
+
             logger.info('Zoom factor set to: {}', clampedFactor);
             return { success: true, factor: clampedFactor };
         } catch (error) {
@@ -660,9 +661,10 @@ function initIpcHandlers() {
             BrowserWindow.getAllWindows().forEach(win => {
                 if (!win.isDestroyed()) {
                     win.webContents.setZoomFactor(1.0);
+                    win.webContents.send('zoom-changed', 1.0);
                 }
             });
-            
+
             logger.info('Zoom factor reset to 1.0');
             return { success: true, factor: 1.0 };
         } catch (error) {

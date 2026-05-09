@@ -60,6 +60,8 @@
     "settings": {
         "title": "Settings",
         "basicGroup": "Basic Settings",
+        "zoom": "Zoom Level",
+        "zoomReset": "Reset",
         "dataPathGroup": "Data Path",
         "logGroup": "Log Settings",
         "language": "Language",

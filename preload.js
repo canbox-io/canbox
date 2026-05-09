@@ -240,7 +240,10 @@ contextBridge.exposeInMainWorld(
         zoom: {
             get: () => ipcRenderer.invoke('zoom-get'),
             set: (factor) => ipcRenderer.invoke('zoom-set', factor),
-            reset: () => ipcRenderer.invoke('zoom-reset')
+            reset: () => ipcRenderer.invoke('zoom-reset'),
+            onChanged: (callback) => {
+                ipcRenderer.on('zoom-changed', (event, factor) => callback(factor));
+            }
         },
         menu: {
             getLast: () => ipcRenderer.invoke('menu-get-last'),
