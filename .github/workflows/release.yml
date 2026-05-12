@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  # 推送 tag 时自动触发，构建所有平台
+  push:
+    tags:
+      - 'v*'
+
+  # 手动触发，可选择构建特定平台
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: '选择构建平台'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - linux
+          - windows
+          - darwin
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Linux AppImage
+        if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'linux' || github.event.inputs.platforms == ''
+        run: npm run build-appimage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.AppImage
+            dist/*-delta*.AppImage
+            dist/latest-linux.yml
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Gitee Release
+        if: success()
+        run: |
+          # Get tag name
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+
+          # Generate release notes from GitHub
+          RELEASE_NOTES="Canbox $VERSION 自动发布"
+
+          # Create Gitee release via API (使用独立的 canbox-release 仓库)
+          curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+            -d "{
+              \"tag_name\": \"$TAG_NAME\",
+              \"name\": \"Canbox $VERSION\",
+              \"body\": \"$RELEASE_NOTES\",
+              \"prerelease\": false
+            }"
+        shell: bash
+
+      - name: Upload to Gitee Release
+        if: success()
+        run: |
+          # Get tag name
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+
+          # Get release ID from canbox-release repo
+          RELEASE_ID=$(curl -s "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/tags/$TAG_NAME" \
+            -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Failed to get Gitee release ID"
+            exit 1
+          fi
+
+          # Upload AppImage to Gitee
+          for FILE in dist/*.AppImage; do
+            if [ -f "$FILE" ]; then
+              echo "Uploading $FILE to Gitee..."
+              curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+                -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+                -F "file=@$FILE"
+              echo ""
+            fi
+          done
+
+          # Upload delta AppImage (differential update)
+          for FILE in dist/*-delta*.AppImage; do
+            if [ -f "$FILE" ]; then
+              echo "Uploading $FILE to Gitee..."
+              curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+                -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+                -F "file=@$FILE"
+              echo ""
+            fi
+          done
+
+          # Upload latest-linux.yml
+          if [ -f "dist/latest-linux.yml" ]; then
+            echo "Uploading latest-linux.yml to Gitee..."
+            curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+              -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+              -F "file=@dist/latest-linux.yml"
+            echo ""
+          fi
+        shell: bash

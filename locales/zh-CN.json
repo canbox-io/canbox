@@ -352,7 +352,15 @@
             "skippedVersions": "跳过的版本",
             "clearSkipped": "清除跳过的版本",
             "clearSkippedConfirm": "确定要清除以下跳过的版本吗？",
-            "skippedVersionsList": "跳过的版本：{versions}"
+            "skippedVersionsList": "跳过的版本：{versions}",
+            "updateSource": "更新源",
+            "updateSourceGithub": "GitHub",
+            "updateSourceGitee": "Gitee",
+            "updateSourceAuto": "自动（推荐）",
+            "updateSourceAutoDesc": "根据网络状况智能选择",
+            "currentSource": "当前源",
+            "sourceAuto": "自动",
+            "sourceChanged": "更新源已切换为 {source}"
         },
         "errors": {
             "networkErrorHint": "检查网络连接",

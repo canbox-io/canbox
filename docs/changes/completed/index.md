@@ -259,8 +259,8 @@ grep -l "优先级: ⭐⭐⭐⭐" ./*.md
 - [API参考](../../development/api-reference/) - API文档
 
 ### 外部资源
-- [GitHub仓库](https://github.com/lizl6/canbox)
-- [问题追踪](https://github.com/lizl6/canbox/issues)
+- [GitHub仓库](https://github.com/rexlevin/canbox)
+- [问题追踪](https://github.com/rexlevin/canbox/issues)
 
 ### 团队资源
 - 变更管理流程文档

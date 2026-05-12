@@ -199,7 +199,7 @@ async function handleAddAppRepo(repoUrl) {
         "3a6f487d7f9f4fae86dcfbc3dde401a2": {
             "id": "com.gitee.lizl6.cb-jsonbox",
             "name": "jsonbox",
-            "repo": "https://gitee.com/lizl6/cb-jsonbox",
+            "repo": "https://gitee.com/rexlevin/cb-jsonbox",
             "branch": "master",
             "author": "lizl6",
             "version": "0.0.1",

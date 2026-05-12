@@ -182,6 +182,31 @@
                 </div>
             </div>
 
+            <!-- 更新源 -->
+            <div class="setting-item" :class="{ disabled: !updateConfig.enabled }">
+                <label class="setting-label">
+                    <span class="setting-icon">🌐</span>
+                    {{ $t('autoUpdate.settings.updateSource') }}
+                </label>
+                <div class="setting-control update-source-control">
+                    <el-radio-group v-model="updateSource" @change="handleUpdateSourceChange">
+                        <el-radio value="auto" class="update-source-radio">
+                            {{ $t('autoUpdate.settings.updateSourceAuto') }}
+                            <span class="source-desc">{{ $t('autoUpdate.settings.updateSourceAutoDesc') }}</span>
+                        </el-radio>
+                        <el-radio value="github" class="update-source-radio">
+                            {{ $t('autoUpdate.settings.updateSourceGithub') }}
+                        </el-radio>
+                        <el-radio value="gitee" class="update-source-radio">
+                            {{ $t('autoUpdate.settings.updateSourceGitee') }}
+                        </el-radio>
+                    </el-radio-group>
+                    <div class="current-source">
+                        {{ $t('autoUpdate.settings.currentSource') }}: {{ currentSourceDisplay }}
+                    </div>
+                </div>
+            </div>
+
             <div class="setting-item" :class="{ disabled: !updateConfig.enabled }">
                 <label class="setting-label">
                     {{ $t('autoUpdate.settings.checkFrequency') }}
@@ -257,6 +282,18 @@ const updateConfig = ref({
     skippedVersions: []
 });
 const isCheckingUpdate = ref(false);
+
+// 更新源相关
+const updateSource = ref('auto');
+const currentSource = ref('');
+
+// 当前源显示文本
+const currentSourceDisplay = computed(() => {
+    if (currentSource.value === 'github') return 'GitHub';
+    if (currentSource.value === 'gitee') return 'Gitee';
+    if (currentSource.value === 'auto') return currentSource.value;
+    return currentSource.value || '-';
+});
 
 // 自定义数据路径相关
 const currentDataPath = ref('');
@@ -553,6 +590,41 @@ async function handleClearSkipped() {
     }
 }
 
+async function loadUpdateSource() {
+    try {
+        const result = await window.api['update-source:get']();
+        if (result.success) {
+            updateSource.value = result.source;
+            currentSource.value = result.currentSource;
+        }
+    } catch (error) {
+        console.error('Failed to load update source:', error);
+    }
+}
+
+async function handleUpdateSourceChange(source) {
+    try {
+        const result = await window.api['update-source:set'](source);
+        if (result.success) {
+            currentSource.value = source;
+            ElMessage.success(t('autoUpdate.settings.sourceChanged', { source: source.toUpperCase() }));
+        } else {
+            ElMessage.error(result.error || t('common.error'));
+            // 恢复原值
+            await loadUpdateSource();
+        }
+    } catch (error) {
+        ElMessage.error(t('common.error'));
+        await loadUpdateSource();
+    }
+}
+
+function onUpdateSourceChanged(event) {
+    const { to } = event;
+    updateSource.value = to;
+    currentSource.value = to;
+}
+
 function applyFont(fontValue) {
     if (fontValue === 'default') {
         document.documentElement.style.fontFamily = '';
@@ -593,15 +665,18 @@ async function loadSettings() {
     logRetentionDays.value = await window.api.logViewer.getRetentionDays();
 
     await loadUpdateConfig();
+    await loadUpdateSource();
 }
 
 onMounted(() => {
     loadSettings();
     window.api.on('font-changed', onFontChanged);
+    window.api.on('update-source:changed', onUpdateSourceChanged);
 });
 
 onUnmounted(() => {
     window.api.off?.('font-changed', onFontChanged);
+    window.api.off?.('update-source:changed', onUpdateSourceChanged);
 });
 </script>
 
@@ -806,5 +881,32 @@ onUnmounted(() => {
         font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
         font-size: 14px;
     }
+}
+
+/* 更新源控件样式 */
+.update-source-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.update-source-radio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.update-source-radio .source-desc {
+    font-size: 12px;
+    color: #909399;
+    margin-left: 24px;
+    margin-top: 2px;
+}
+
+.current-source {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #606266;
 }
 </style>

@@ -2,7 +2,7 @@
     "name": "canbox",
     "productName": "canbox",
     "private": true,
-    "version": "0.4.1",
+    "version": "0.4.2",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
@@ -64,6 +64,7 @@
             "icon": "build/logo.png",
             "category": "System;Applications;Utility",
             "executableName": "canbox",
+            "differentialPackagePolicy": "auto",
             "desktop": {
                 "entry": {
                     "Name": "Canbox",

@@ -14,7 +14,7 @@ const processBridge = require('./modules/childprocess/processBridge');
 const pathManager = require('./modules/main/pathManager');
 const userDataMigration = require('./modules/main/userDataMigration');
 const logIpcHandler = require('./modules/ipc/logIpcHandler');
-const { getAutoUpdateManager, IPC_CHANNELS } = require('./modules/auto-update');
+const { getAutoUpdater, IPC_CHANNELS, getUpdateSource, setUpdateSource, getSourceSuccessRates } = require('./modules/update-center');
 const { FileTaskIPC } = require('./modules/file-task');
 
 // 默认语言为英文
@@ -504,7 +504,7 @@ function initIpcHandlers() {
     // 检查更新
     ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATE, async () => {
         try {
-            const manager = getAutoUpdateManager();
+            const manager = getAutoUpdater();
             // 设置为非启动时检查，确保错误能正确弹窗
             manager.setStartupCheck(false);
             const result = await manager.checkForUpdates();
@@ -518,7 +518,7 @@ function initIpcHandlers() {
     // 下载更新
     ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
         try {
-            const manager = getAutoUpdateManager();
+            const manager = getAutoUpdater();
             await manager.downloadUpdate();
             return { success: true };
         } catch (error) {
@@ -530,7 +530,7 @@ function initIpcHandlers() {
     // 安装更新
     ipcMain.handle(IPC_CHANNELS.INSTALL_UPDATE, async () => {
         try {
-            const manager = getAutoUpdateManager();
+            const manager = getAutoUpdater();
             await manager.installUpdate();
             return { success: true };
         } catch (error) {
@@ -542,7 +542,7 @@ function initIpcHandlers() {
     // 取消下载
     ipcMain.handle(IPC_CHANNELS.CANCEL_DOWNLOAD, async () => {
         try {
-            const manager = getAutoUpdateManager();
+            const manager = getAutoUpdater();
             await manager.cancelDownload();
             return { success: true };
         } catch (error) {
@@ -554,7 +554,7 @@ function initIpcHandlers() {
     // 获取更新状态
     ipcMain.handle(IPC_CHANNELS.GET_UPDATE_STATUS, async () => {
         try {
-            const manager = getAutoUpdateManager();
+            const manager = getAutoUpdater();
             const status = manager.getStatus();
             return { success: true, status };
         } catch (error) {
@@ -566,7 +566,6 @@ function initIpcHandlers() {
     // 获取更新配置
     ipcMain.handle(IPC_CHANNELS.GET_UPDATE_CONFIG, async () => {
         try {
-            const { getConfig } = require('./modules/auto-update');
             const config = await getConfig();
             return { success: true, config };
         } catch (error) {
@@ -578,7 +577,6 @@ function initIpcHandlers() {
     // 保存更新配置
     ipcMain.handle(IPC_CHANNELS.SAVE_UPDATE_CONFIG, async (event, config) => {
         try {
-            const { saveConfig } = require('./modules/auto-update');
             await saveConfig(config);
             return { success: true };
         } catch (error) {
@@ -590,7 +588,7 @@ function initIpcHandlers() {
     // 跳过版本
     ipcMain.handle(IPC_CHANNELS.SKIP_VERSION, async (event, version) => {
         try {
-            const manager = getAutoUpdateManager();
+            const manager = getAutoUpdater();
             await manager.skipVersion(version);
             return { success: true };
         } catch (error) {
@@ -604,6 +602,56 @@ function initIpcHandlers() {
         logger.info('show-update-dialog 事件收到，转发给渲染进程');
         // 向渲染进程发送事件，让 App.vue 监听到并打开对话框
         event.sender.send(IPC_CHANNELS.SHOW_UPDATE_DIALOG);
+    });
+
+    // ========== 更新源相关 IPC 处理 ==========
+
+    // 获取当前更新源设置
+    ipcMain.handle('update-source:get', async () => {
+        try {
+            const source = getUpdateSource();
+            const stats = getSourceSuccessRates();
+            const manager = getAutoUpdater();
+            const currentSource = manager.getSourceInfo().source;
+            return {
+                success: true,
+                source,
+                currentSource,
+                stats
+            };
+        } catch (error) {
+            logger.error('Failed to get update source:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 设置更新源
+    ipcMain.handle('update-source:set', async (event, source) => {
+        try {
+            if (!['github', 'gitee', 'auto'].includes(source)) {
+                return { success: false, error: 'Invalid source' };
+            }
+
+            const previousSource = getUpdateSource();
+            setUpdateSource(source);
+
+            logger.info(`Update source changed from '${previousSource}' to '${source}'`);
+
+            // 通知渲染进程更新源已变更
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (win.webContents && !win.isDestroyed()) {
+                    win.webContents.send('update-source:changed', {
+                        from: previousSource,
+                        to: source
+                    });
+                }
+            });
+
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set update source:', error);
+            return { success: false, error: error.message };
+        }
     });
 
     // 重启应用（Linux AppImage 更新后使用）

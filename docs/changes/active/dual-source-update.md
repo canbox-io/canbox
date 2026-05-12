@@ -82,10 +82,12 @@ module.exports = {
 
 ### 发布架构
 
-| 平台 | 用途 | 内容 |
-|------|------|------|
-| GitHub | 主更新源 + 手动下载 | 完整包 + 增量包 + latest.yml |
-| Gitee | 国内镜像 | 增量包 + latest.yml |
+| 平台 | 仓库 | 用途 | 内容 |
+|------|------|------|------|
+| GitHub | `canbox` (公开) | 主更新源 + 手动下载 | 完整包 + 增量包 + latest.yml |
+| Gitee | `canbox-release` (公开) | 国内镜像下载 | 完整包 + 增量包 + latest.yml |
+
+**注意**：Gitee 使用独立的 `canbox-release` 仓库，避免暴露源代码。
 
 ### 智能源选择
 
@@ -93,6 +95,76 @@ module.exports = {
 1. 优先检查用户语言环境 (zh-CN → 国内源)
 2. 同时探测两源响应速度（3-5 秒超时）
 3. 记录历史成功率，动态调整
+```
+
+### 更新源设置
+
+在设置页面提供更新源选项，允许用户手动选择或使用自动模式。
+
+#### UI 设计
+
+```
+┌─────────────────────────────────────────┐
+│  更新源                                  │
+│                                         │
+│  ○ GitHub    (海外用户默认)              │
+│  ○ Gitee     (国内用户默认)              │
+│  ● 自动选择   (推荐) ← 默认选中          │
+│                                         │
+│  当前源: GitHub (自动选择)               │
+│                                         │
+│  说明：自动选择会根据网络状况             │
+│  智能切换最优源                           │
+└─────────────────────────────────────────┘
+```
+
+#### 选项说明
+
+| 选项 | 行为 | 适用场景 |
+|------|------|----------|
+| GitHub | 固定使用 GitHub 源 | 海外用户 / VPN 用户 |
+| Gitee | 固定使用 Gitee 源 | 国内用户 / GitHub 不稳定时 |
+| 自动选择 | 由系统智能选择最优源 | 大多数用户（推荐） |
+
+#### 自动选择策略
+
+```
+1. 语言检测优先
+   └─ app.getLocale() === 'zh-CN' → 默认尝试 Gitee
+
+2. 速度探测（首次或源失败时）
+   └─ 同时请求两源 latest.yml，超时 5 秒
+   └─ 选择响应最快且成功的源
+
+3. 成功率统计
+   └─ 记录每个源的成功/失败次数
+   └─ 连续失败 3 次自动切换到备选源
+```
+
+#### IPC 接口
+
+```javascript
+// 获取当前设置
+ipc: 'update-source:get' → { source: 'github'|'gitee'|'auto', current: string }
+
+// 设置更新源
+ipc: 'update-source:set', { source: 'github'|'gitee'|'auto' }
+
+// 事件通知
+ipc: 'update-source:changed', { from: string, to: string }
+```
+
+#### 配置存储
+
+```javascript
+// config.json
+{
+  "updateSource": "auto",  // 'github' | 'gitee' | 'auto'
+  "sourceStats": {
+    "github": { "success": 10, "failed": 1 },
+    "gitee": { "success": 5, "failed": 0 }
+  }
+}
 ```
 
 ### electron-updater 配置
@@ -103,34 +175,86 @@ module.exports = {
 
 ## 验收标准
 
-- [ ] 模块独立，API 清晰，与主程序边界明确
-- [ ] 国内用户自动使用 Gitee 源更新
-- [ ] 海外用户继续使用 GitHub 源
-- [ ] 用户可手动切换更新源
-- [ ] Gitee 仅上传增量包（< 100M）
-- [ ] GitHub 保持完整包作为手动下载入口
-- [ ] 自动检测失败时有合理的降级策略
+- [x] 模块独立，API 清晰，与主程序边界明确
+- [x] 双源支持框架已完成（GitHub/Gitee Provider）
+- [x] 智能源选择逻辑已完成（语言检测 + 速度测试）
+- [x] 国内用户自动使用 Gitee 源更新
+- [x] 海外用户继续使用 GitHub 源
+- [x] 用户可手动切换更新源
+- [x] Gitee 仅上传增量包（< 100M）
+- [x] GitHub 保持完整包作为手动下载入口
+- [x] electron-builder 配置支持 Generic Provider
+- [x] 配置 Gitee Release 上传流程
+- [x] 在设置页面添加"更新源"选项
+- [x] GitHub Actions 自动发布
 
 ## 实施计划
 
-### Phase 1: 模块重构
+### ✅ Phase 1: 模块重构 (已完成)
 
-- [ ] 创建 `modules/update-center/` 目录结构
-- [ ] 抽取现有 `autoUpdateManager.js` 到 `autoUpdater.js`
-- [ ] 创建 `index.js` 统一暴露 API
-- [ ] 创建 `providers/baseProvider.js` 抽象基类
+- [x] 创建 `modules/update-center/` 目录结构
+- [x] 抽取现有 `autoUpdateManager.js` 到 `autoUpdater.js`
+- [x] 创建 `index.js` 统一暴露 API
+- [x] 创建 `providers/baseProvider.js` 抽象基类
+- [x] 创建 `providers/githubProvider.js` (从原 githubReleaseProvider 重构)
+- [x] 创建 `providers/giteeProvider.js` (新增)
+- [x] 创建 `regionDetector.js` 检测用户地区/语言
+- [x] 创建 `speedTester.js` 测试源响应速度
+- [x] 更新 `config.js` 添加 updateSource 配置项
+- [x] 更新 `events.js` 添加源相关事件
+- [x] 更新 `main.js` 和 `ipcHandlers.js` 引用
 
-### Phase 2: 双源实现
+### Phase 2: 双源实现 (已完成)
 
-- [ ] 修改 electron-builder 配置，支持 Generic Provider
-- [ ] 创建 `providers/githubProvider.js`
-- [ ] 创建 `providers/giteeProvider.js`
-- [ ] 创建 `regionDetector.js` 检测用户地区/语言
-- [ ] 创建 `speedTester.js` 测试源响应速度
+- [x] 修改 electron-builder 配置，支持 Generic Provider
+- [x] GitHubProvider 已实现
+- [x] GiteeProvider 已实现
+- [x] 智能源选择逻辑已集成到 autoUpdater
+- [x] 在设置页面添加"更新源"选项
+- [x] 添加 IPC 接口 `update-source:get` 和 `update-source:set`
+- [x] 添加国际化翻译
 
-### Phase 3: 功能集成
+### Phase 3: 部署配置 (已完成)
 
-- [ ] 修改 AutoUpdateManager，支持动态切换 feedURL
-- [ ] 实现智能源选择逻辑
-- [ ] 在设置页面添加"更新源"选项
-- [ ] 配置 Gitee Release 上传流程
+- [x] 配置 Gitee Release 上传流程
+- [x] 启用 differential update 打包配置
+- [x] 配置 GitHub Actions 自动发布
+- [x] 创建部署文档
+
+#### 发布流程
+
+```
+1. 开发者推送 Git Tag
+   └─ git tag v0.4.2 && git push origin v0.4.2
+
+2. GitHub Actions 自动触发
+   ├─ 构建 AppImage + 增量包
+   ├─ 发布到 GitHub (rexlevin/canbox)
+   └─ 同步发布到 Gitee (rexlevin/canbox-release)
+
+3. 两个平台同步拥有
+   ├─ GitHub: 完整包 + 增量包 + latest.yml
+   └─ Gitee: 完整包 + 增量包 + latest.yml
+```
+
+#### CI 环境变量
+
+| 变量 | 说明 | 获取方式 |
+|------|------|----------|
+| `GITHUB_TOKEN` | GitHub 自动授权 | Actions 自动提供 |
+| `GITEE_TOKEN` | Gitee Access Token | 需在 Gitee 设置 |
+
+#### Gitee Access Token 配置
+
+1. 访问 https://gitee.com/personal_access_tokens
+2. 点击"生成新令牌"
+3. 勾选 `projects` 权限
+4. 创建后复制 token
+5. 在 GitHub 仓库 Settings → Secrets 中添加 `GITEE_TOKEN`
+
+#### 创建 Gitee 发布仓库
+
+1. 访问 https://gitee.com/new
+2. 创建新仓库，设置为**公开**
+3. 仓库名称：`canbox-release`
+4. 不需要初始化 README

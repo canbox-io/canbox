@@ -68,7 +68,7 @@ function buildTrayMenuTemplate(currentLang) {
             if(locale.indexOf('zh-CN') == -1) {
                 url = 'https://github.com/rexlevin/canbox'
             } else {
-                url = 'https://gitee.com/lizl6/canbox'
+                url = 'https://gitee.com/rexlevin/canbox'
             }
             exec('open ' + url)
         }

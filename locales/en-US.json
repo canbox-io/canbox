@@ -351,7 +351,15 @@
             "skippedVersions": "Skipped versions",
             "clearSkipped": "Clear skipped versions",
             "clearSkippedConfirm": "Are you sure you want to clear the following skipped versions?",
-            "skippedVersionsList": "Skipped versions: {versions}"
+            "skippedVersionsList": "Skipped versions: {versions}",
+            "updateSource": "Update Source",
+            "updateSourceGithub": "GitHub",
+            "updateSourceGitee": "Gitee",
+            "updateSourceAuto": "Auto (Recommended)",
+            "updateSourceAutoDesc": "Smart selection based on network",
+            "currentSource": "Current Source",
+            "sourceAuto": "Auto",
+            "sourceChanged": "Update source changed to {source}"
         },
         "errors": {
             "networkErrorHint": "Check your network connection",

@@ -172,7 +172,7 @@ const openGithub = () => {
 };
 
 const openGitee = () => {
-    window.api.openUrl('https://gitee.com/lizl6/canbox');
+    window.api.openUrl('https://gitee.com/rexlevin/canbox');
 };
 
 const openLicense = async () => {

@@ -24,7 +24,7 @@ moduleAlias();
 const logger = require('@modules/utils/logger');
 const { getCanboxStore } = require('@modules/main/storageManager');
 const ModeDetector = require('@modules/execution/modeDetector');
-const { getAutoUpdateManager } = require('@modules/auto-update');
+const { getAutoUpdater } = require('@modules/update-center');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -535,7 +535,7 @@ function initAutoUpdate() {
         }
 
         // 获取自动更新管理器实例
-        const updateManager = getAutoUpdateManager();
+        const updateManager = getAutoUpdater();
         updateManager.setMainWindow(mainWindow);
 
         // 延迟检查更新，避免影响启动速度

@@ -116,8 +116,8 @@ canbox/
 
 ## 🔗 相关资源
 
-- [GitHub 仓库](https://github.com/lizl6/canbox)
-- [问题追踪](https://github.com/lizl6/canbox/issues)
+- [GitHub 仓库](https://github.com/rexlevin/canbox)
+- [问题追踪](https://github.com/rexlevin/canbox/issues)
 
 ---
 
