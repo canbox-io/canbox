@@ -50,6 +50,10 @@ contextBridge.exposeInMainWorld(
             saveConfig: (config) => ipcRenderer.invoke('save-update-config', config),
             skipVersion: (version) => ipcRenderer.invoke('skip-version', version)
         },
+        updateSource: {
+            get: () => ipcRenderer.invoke('update-source:get'),
+            set: (source) => ipcRenderer.invoke('update-source:set', source)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },

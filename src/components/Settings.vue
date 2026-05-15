@@ -592,7 +592,7 @@ async function handleClearSkipped() {
 
 async function loadUpdateSource() {
     try {
-        const result = await window.api['update-source:get']();
+        const result = await window.api.updateSource.get();
         if (result.success) {
             updateSource.value = result.source;
             currentSource.value = result.currentSource;
@@ -604,7 +604,7 @@ async function loadUpdateSource() {
 
 async function handleUpdateSourceChange(source) {
     try {
-        const result = await window.api['update-source:set'](source);
+        const result = await window.api.updateSource.set(source);
         if (result.success) {
             currentSource.value = source;
             ElMessage.success(t('autoUpdate.settings.sourceChanged', { source: source.toUpperCase() }));
