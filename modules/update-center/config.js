@@ -10,11 +10,11 @@
  * - checkFrequency: 检查频率
  * - autoDownload: 是否自动下载更新包
  * - autoInstall: 更新后是否自动安装
- * - updateSource: 更新源 (github/gitee/auto)
+ * - updateSource: 更新源 (github/mirror/auto)
  * - skippedVersions: 跳过的版本列表
  * - lastCheckTime: 上次检查时间（时间戳）
  * - lastVersionChecked: 上次检查的版本号
- * - sourceSuccessRates: 各源历史成功率 { github: 0.9, gitee: 0.8 }
+ * - sourceSuccessRates: 各源历史成功率 { github: 0.9, mirror: 0.8 }
  */
 
 const { getCanboxStore } = require('@modules/main/storageManager');
@@ -29,13 +29,13 @@ const DEFAULT_CONFIG = {
     checkFrequency: 'startup',         // 检查频率：startup/daily/weekly/manual
     autoDownload: false,              // 是否自动下载更新包
     autoInstall: false,               // 更新后是否自动安装
-    updateSource: 'auto',             // 更新源：github/gitee/auto
+    updateSource: 'auto',             // 更新源：github/mirror/auto
     skippedVersions: [],               // 跳过的版本列表
     lastCheckTime: null,              // 上次检查时间（时间戳）
     lastVersionChecked: null,         // 上次检查的版本号
     sourceSuccessRates: {             // 各源历史成功率
         github: 1.0,
-        gitee: 1.0
+        mirror: 1.0
     }
 };
 
@@ -208,11 +208,11 @@ async function getUpdateSource() {
 
 /**
  * 设置更新源
- * @param {string} source - 更新源 (github/gitee/auto)
+ * @param {string} source - 更新源 (github/mirror/auto)
  * @returns {Promise<void>}
  */
 async function setUpdateSource(source) {
-    const validSources = ['github', 'gitee', 'auto'];
+    const validSources = ['github', 'mirror', 'auto'];
     if (!validSources.includes(source)) {
         throw new Error(`无效的更新源: ${source}，有效值: ${validSources.join(', ')}`);
     }
@@ -232,7 +232,7 @@ async function recordSourceResult(source, success) {
     try {
         const config = await getConfig();
         if (!config.sourceSuccessRates) {
-            config.sourceSuccessRates = { github: 1.0, gitee: 1.0 };
+            config.sourceSuccessRates = { github: 1.0, mirror: 1.0 };
         }
 
         const currentRate = config.sourceSuccessRates[source] || 1.0;
@@ -255,7 +255,7 @@ async function recordSourceResult(source, success) {
  */
 async function getSourceSuccessRates() {
     const config = await getConfig();
-    return config.sourceSuccessRates || { github: 1.0, gitee: 1.0 };
+    return config.sourceSuccessRates || { github: 1.0, mirror: 1.0 };
 }
 
 module.exports = {

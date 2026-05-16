@@ -5,7 +5,7 @@
  */
 
 const GitHubProvider = require('./providers/githubProvider');
-const GiteeProvider = require('./providers/giteeProvider');
+const MirrorProvider = require('./providers/mirrorProvider');
 const logger = require('@modules/utils/logger');
 
 /**
@@ -38,8 +38,6 @@ async function testProvider(provider, timeout = 5000) {
  * @param {Object} options - 配置选项
  * @param {string} options.githubOwner - GitHub 仓库所有者
  * @param {string} options.githubRepo - GitHub 仓库名称
- * @param {string} options.giteeOwner - Gitee 仓库所有者
- * @param {string} options.giteeRepo - Gitee 仓库名称
  * @param {number} timeout - 超时时间（毫秒）
  * @returns {Promise<Array<{name: string, available: boolean, latency: number}>>}
  */
@@ -53,12 +51,10 @@ async function testAllSources(options = {}, timeout = 5000) {
         }));
     }
 
-    if (options.giteeOwner && options.giteeRepo) {
-        providers.push(new GiteeProvider({
-            owner: options.giteeOwner,
-            repo: options.giteeRepo
-        }));
-    }
+    providers.push(new MirrorProvider({
+        owner: options.githubOwner || 'rexlevin',
+        repo: options.githubRepo || 'canbox'
+    }));
 
     logger.info('[SpeedTester] 开始测试 {} 个源', providers.length);
 

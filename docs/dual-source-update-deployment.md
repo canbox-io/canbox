@@ -2,22 +2,22 @@
 
 ## 概述
 
-Canbox 采用双源更新机制，国内用户使用 Gitee 源，海外用户使用 GitHub 源。同时启用增量更新（differential update），解决 Gitee 100M 文件大小限制。
+Canbox 采用双源更新机制，国内用户使用 GitHub 镜像加速源，海外用户使用 GitHub 直连。通过国内代理加速解决 GitHub 访问不稳定的问题。
 
 ## 仓库架构
 
 | 仓库 | 可见性 | 用途 |
 |------|--------|------|
-| `canbox` (GitHub) | 私有 | 源代码存储 |
-| `canbox` (GitHub) | 公开 | Releases 发布 |
-| `canbox-release` (Gitee) | 公开 | Releases 镜像下载 |
+| `canbox` (GitHub) | 公开 | 源代码 + Releases 发布 |
+
+**说明**：镜像加速方案不需要独立的文件存储服务。代理服务直接从 GitHub Release 拉取文件，无需额外上传到第三方平台。
 
 ## 发布架构
 
-| 平台 | 内容 | 用途 |
-|------|------|------|
-| GitHub | 完整包 + 增量包 + latest.yml | 主更新源 + 手动下载入口 |
-| Gitee (canbox-release) | 完整包 + 增量包 + latest.yml | 国内镜像下载 |
+| 源 | feedURL | 用途 |
+|---|---------|------|
+| GitHub 直连 | `https://github.com/rexlevin/canbox/releases/latest/download` | 海外用户 |
+| 镜像加速 | `https://ghproxy.com/https://github.com/rexlevin/canbox/releases/latest/download` | 国内用户 |
 
 ## 发布流程
 
@@ -25,7 +25,7 @@ Canbox 采用双源更新机制，国内用户使用 Gitee 源，海外用户使
 
 ### 方式一：自动发布（推送 Tag）
 
-推送 Git Tag 即可自动发布到 GitHub 和 Gitee：
+推送 Git Tag 即可自动发布到 GitHub：
 
 ```bash
 # 1. 确保所有更改已提交
@@ -38,9 +38,8 @@ git push origin v0.4.2
 ```
 
 GitHub Actions 会自动：
-1. 构建 AppImage + 增量包
+1. 构建 AppImage
 2. 发布到 GitHub Release
-3. 同步发布到 Gitee Release
 
 ### 方式二：手动发布（可选择平台）
 
@@ -69,33 +68,8 @@ GitHub Actions 会自动：
 | 变量 | 说明 | 获取方式 |
 |------|------|----------|
 | `GITHUB_TOKEN` | GitHub 自动授权 | Actions 自动提供，无需配置 |
-| `GITEE_TOKEN` | Gitee Access Token | 需手动配置 |
 
-### 配置 Gitee Access Token
-
-1. 访问 https://gitee.com/personal_access_tokens
-2. 点击「生成新令牌」
-3. 勾选以下权限：
-   - `projects` (项目)
-4. 点击「提交」生成 Token
-5. 复制 Token
-
-### 创建 Gitee 发布仓库
-
-1. 访问 https://gitee.com/new
-2. 创建新仓库，设置为**公开**
-3. 仓库名称：`canbox-release`
-4. 描述：Canbox Release 镜像下载
-5. 不需要初始化 README
-
-### 在 GitHub 仓库添加 Secret
-
-1. 访问 GitHub 仓库 https://github.com/rexlevin/canbox
-2. 点击「Settings」→「Secrets and variables」→「Actions」
-3. 点击「New repository secret」
-4. Name: `GITEE_TOKEN`
-5. Secret: 粘贴你的 Gitee Access Token
-6. 点击「Add secret」
+**说明**：镜像加速方案不需要额外的 Token 或第三方服务配置。
 
 ## electron-builder 配置
 
@@ -118,8 +92,8 @@ GitHub Actions 会自动：
 | 选项 | 说明 |
 |------|------|
 | 自动选择 | 系统根据网络状况智能选择（推荐） |
-| GitHub | 固定使用 GitHub 源 |
-| Gitee | 固定使用 Gitee 源 |
+| GitHub | 固定使用 GitHub 直连 |
+| 镜像加速 | 通过国内代理加速访问 GitHub |
 
 ### Generic Provider URL
 
@@ -127,8 +101,8 @@ GitHub Actions 会自动：
 
 | 源 | latest.yml 地址 |
 |---|-----------------|
-| GitHub | `https://github.com/rexlevin/canbox/releases/download/latest/latest-linux.yml` |
-| Gitee | `https://gitee.com/rexlevin/canbox-release/releases/download/latest/latest-linux.yml` |
+| GitHub 直连 | `https://github.com/rexlevin/canbox/releases/latest/download/latest-linux.yml` |
+| 镜像加速 | `https://ghproxy.com/https://github.com/rexlevin/canbox/releases/latest/download/latest-linux.yml` |
 
 ## 文件结构
 
@@ -136,41 +110,54 @@ GitHub Actions 会自动：
 
 ```
 v0.4.2/
-├── Canbox-0.4.2-linux-x86_64.AppImage     # 完整包
-├── Canbox-0.4.2-linux-x86_64-delta.AppImage  # 增量包
-└── latest-linux.yml                        # 更新清单
+├── canbox-linux-x86_64.AppImage     # 完整包
+└── latest-linux.yml                  # 更新清单
 ```
 
-### Gitee Release (canbox-release 仓库)
+## 镜像加速源工作原理
 
 ```
-v0.4.2/
-├── Canbox-0.4.2-linux-x86_64.AppImage     # 完整包（用于手动下载）
-├── Canbox-0.4.2-linux-x86_64-delta.AppImage  # 增量包（< 100M）
-└── latest-linux.yml                        # 更新清单
+直连 GitHub：
+  feedURL = https://github.com/rexlevin/canbox/releases/latest/download
+  → 请求 latest-linux.yml
+  → 下载 canbox-linux-x86_64.AppImage
+
+镜像加速：
+  feedURL = https://ghproxy.com/https://github.com/rexlevin/canbox/releases/latest/download
+  → 代理从 GitHub 拉取 latest-linux.yml → 返回给客户端
+  → 代理从 GitHub 拉取 canbox-linux-x86_64.AppImage → 返回给客户端
 ```
+
+文件仍然存储在 GitHub Release 上，代理只做链路加速，无需额外上传。
+
+### 可用代理列表
+
+| 代理 | URL 前缀 | 说明 |
+|------|----------|------|
+| ghproxy | `https://ghproxy.com` | 老牌，稳定 |
+| ghfast | `https://ghfast.top` | 速度较快 |
+| ghgo | `https://ghgo.xyz` | 备选 |
+
+### 降级策略
+
+使用镜像加速源时，如果下载失败，自动降级到 GitHub 直连重试。
 
 ## 常见问题
 
-### Q: Gitee 上传失败怎么办？
+### Q: 镜像加速源不可用怎么办？
 
-检查 `GITEE_TOKEN` 是否正确配置，以及是否有 `projects` 权限。
-
-### Q: 增量包生成失败？
-
-增量包需要前一个版本的文件。如果没有可用历史，打包会失败。这是正常现象。
+系统会自动降级到 GitHub 直连。也可以在设置中手动切换到 GitHub 源。
 
 ### Q: 如何禁用自动发布？
 
 删除 `.github/workflows/release.yml` 文件即可禁用自动发布。
 
-### Q: 如何只发布到 GitHub？
+### Q: 后续想换用 Cloudflare R2 或阿里云 OSS 可以吗？
 
-删除 Workflow 文件中「Create Gitee Release」和「Upload to Gitee Release」步骤。
+可以，代码架构已预留扩展空间。只需新增一个 Provider（如 R2Provider），修改 feedURL 指向新的存储服务即可，其他逻辑无需改动。
 
 ## 相关文档
 
 - [Release Workflow 使用指南](./release-workflow.md)
 - [electron-updater 文档](https://www.electron.build/auto-update)
 - [electron-builder publish 配置](https://www.electron.build/configuration/publish)
-- [Gitee Open API](https://gitee.com/api/v5/swagger#/getV5ReposOwnerRepoReleasesTagTag)

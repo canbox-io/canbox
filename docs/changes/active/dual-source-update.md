@@ -2,14 +2,14 @@
 
 ## 概述
 
-实现双源更新机制：国内用户使用 Gitee 镜像源，海外用户继续使用 GitHub。同时启用增量更新（differential update），解决 Gitee 100M 文件大小限制问题。
+实现双源更新机制：国内用户使用 GitHub 镜像加速源，海外用户继续使用 GitHub 直连。通过代理加速解决国内访问 GitHub 不稳定的问题。
 
 ## 背景
 
-- GitHub 在国内访问不稳定
-- Gitee 存在 100M release 文件大小限制
-- Canbox 单平台包约 150M，无法直接上传 Gitee
-- electron-updater 支持 differential update，增量包远小于完整包
+- GitHub 在国内访问不稳定，下载速度慢甚至超时
+- Gitee 存在 100M release 文件大小限制，Canbox 单平台包约 150M，无法上传
+- Gitee Release 不支持 GitHub 风格的 `releases/download/{tag}/{file}` 静态文件 URL，electron-updater 的 Generic Provider 无法直接使用
+- 国内已有免费的 GitHub 加速代理服务，可以代理 GitHub Release 文件下载
 
 ## 架构设计
 
@@ -25,8 +25,8 @@ modules/update-center/
 ├── speedTester.js              # 源速度测试
 ├── providers/                  # 更新源提供商
 │   ├── baseProvider.js         # 抽象基类
-│   ├── githubProvider.js       # GitHub 实现
-│   └── giteeProvider.js        # Gitee 实现
+│   ├── githubProvider.js       # GitHub 直连实现
+│   └── mirrorProvider.js       # 镜像加速实现
 ├── config.js                   # 配置管理
 └── events.js                   # 事件定义
 ```
@@ -45,7 +45,7 @@ modules/auto-update/     →      modules/update-center/
 ├── githubReleaseProvider.js →   providers/githubProvider.js (移动 + 重构)
 ```
 
-**注意**：`githubReleaseProvider.js` 移入 providers 目录，作为 githubProvider 基类；新增 giteeProvider。
+**注意**：`githubReleaseProvider.js` 移入 providers 目录，作为 githubProvider 基类；新增 mirrorProvider 替代 giteeProvider。
 
 ### 暴露 API
 
@@ -56,17 +56,17 @@ module.exports = {
   checkForUpdates,      // 检查更新
   downloadUpdate,       // 下载更新
   installUpdate,        // 安装更新
-  
+
   // 配置
   getUpdateSource,      // 获取当前更新源
-  setUpdateSource,      // 设置更新源（github/gitee/auto）
+  setUpdateSource,      // 设置更新源（github/mirror/auto）
   getConfig,            // 获取更新配置
   saveConfig,           // 保存更新配置
-  
+
   // 状态
   getStatus,           // 获取当前更新状态
   onUpdateEvent,       // 订阅更新事件
-  
+
   // 工具
   skipVersion,         // 跳过版本
   clearSkippedVersions // 清除跳过列表
@@ -84,15 +84,14 @@ module.exports = {
 
 | 平台 | 仓库 | 用途 | 内容 |
 |------|------|------|------|
-| GitHub | `canbox` (公开) | 主更新源 + 手动下载 | 完整包 + 增量包 + latest.yml |
-| Gitee | `canbox-release` (公开) | 国内镜像下载 | 完整包 + 增量包 + latest.yml |
+| GitHub | `canbox` (公开) | 主更新源 + 镜像源后端 + 手动下载 | 完整包 + latest.yml |
 
-**注意**：Gitee 使用独立的 `canbox-release` 仓库，避免暴露源代码。
+**说明**：镜像加速源不需要独立的文件存储服务。代理服务直接从 GitHub Release 拉取文件，无需额外上传。
 
 ### 智能源选择
 
 ```
-1. 优先检查用户语言环境 (zh-CN → 国内源)
+1. 优先检查用户语言环境 (zh-CN → 镜像加速源)
 2. 同时探测两源响应速度（3-5 秒超时）
 3. 记录历史成功率，动态调整
 ```
@@ -108,7 +107,7 @@ module.exports = {
 │  更新源                                  │
 │                                         │
 │  ○ GitHub    (海外用户默认)              │
-│  ○ Gitee     (国内用户默认)              │
+│  ○ 镜像加速   (国内用户默认)              │
 │  ● 自动选择   (推荐) ← 默认选中          │
 │                                         │
 │  当前源: GitHub (自动选择)               │
@@ -122,15 +121,15 @@ module.exports = {
 
 | 选项 | 行为 | 适用场景 |
 |------|------|----------|
-| GitHub | 固定使用 GitHub 源 | 海外用户 / VPN 用户 |
-| Gitee | 固定使用 Gitee 源 | 国内用户 / GitHub 不稳定时 |
+| GitHub | 固定使用 GitHub 直连 | 海外用户 / VPN 用户 |
+| 镜像加速 | 通过国内代理加速访问 GitHub | 国内用户 / GitHub 不稳定时 |
 | 自动选择 | 由系统智能选择最优源 | 大多数用户（推荐） |
 
 #### 自动选择策略
 
 ```
 1. 语言检测优先
-   └─ app.getLocale() === 'zh-CN' → 默认尝试 Gitee
+   └─ app.getLocale() === 'zh-CN' → 默认尝试镜像加速源
 
 2. 速度探测（首次或源失败时）
    └─ 同时请求两源 latest.yml，超时 5 秒
@@ -141,14 +140,23 @@ module.exports = {
    └─ 连续失败 3 次自动切换到备选源
 ```
 
+#### 降级策略
+
+```
+使用镜像加速源更新时：
+  1. 通过代理请求 latest-linux.yml → 成功
+  2. 通过代理下载 AppImage → 失败（代理不稳定）
+  3. 自动降级：切换到 GitHub 直连重试下载
+```
+
 #### IPC 接口
 
 ```javascript
 // 获取当前设置
-ipc: 'update-source:get' → { source: 'github'|'gitee'|'auto', current: string }
+ipc: 'update-source:get' → { source: 'github'|'mirror'|'auto', current: string }
 
 // 设置更新源
-ipc: 'update-source:set', { source: 'github'|'gitee'|'auto' }
+ipc: 'update-source:set', { source: 'github'|'mirror'|'auto' }
 
 // 事件通知
 ipc: 'update-source:changed', { from: string, to: string }
@@ -159,10 +167,10 @@ ipc: 'update-source:changed', { from: string, to: string }
 ```javascript
 // config.json
 {
-  "updateSource": "auto",  // 'github' | 'gitee' | 'auto'
+  "updateSource": "auto",  // 'github' | 'mirror' | 'auto'
   "sourceStats": {
     "github": { "success": 10, "failed": 1 },
-    "gitee": { "success": 5, "failed": 0 }
+    "mirror": { "success": 5, "failed": 0 }
   }
 }
 ```
@@ -171,20 +179,47 @@ ipc: 'update-source:changed', { from: string, to: string }
 
 - 切换为 Generic Provider
 - 运行时动态设置 feedURL
-- 增量更新自动生效（electron-builder 打包时生成）
+- feedURL 根据源不同指向不同地址：
+  - GitHub 直连：`https://github.com/rexlevin/canbox/releases/latest/download`
+  - 镜像加速：`https://ghproxy.com/https://github.com/rexlevin/canbox/releases/latest/download`
+
+### 镜像加速源工作原理
+
+```
+直连 GitHub：
+  feedURL = https://github.com/rexlevin/canbox/releases/latest/download
+  → 请求 https://github.com/.../latest-linux.yml
+  → 下载 https://github.com/.../canbox-linux-x86_64.AppImage
+
+镜像加速：
+  feedURL = https://ghproxy.com/https://github.com/rexlevin/canbox/releases/latest/download
+  → 请求 https://ghproxy.com/https://github.com/.../latest-linux.yml
+  → 下载 https://ghproxy.com/https://github.com/.../canbox-linux-x86_64.AppImage
+```
+
+代理做的事：收到请求 → 从 GitHub 拉取对应文件 → 返回给客户端。文件仍然存储在 GitHub Release 上，只是链路经过国内加速。
+
+### 可用代理列表
+
+| 代理 | URL 前缀 | 说明 |
+|------|----------|------|
+| ghproxy | `https://ghproxy.com` | 老牌，稳定 |
+| ghfast | `https://ghfast.top` | 速度较快 |
+| ghgo | `https://ghgo.xyz` | 备选 |
+
+代理列表硬编码在 `mirrorProvider.js` 中，后续可扩展为可配置。
 
 ## 验收标准
 
 - [x] 模块独立，API 清晰，与主程序边界明确
-- [x] 双源支持框架已完成（GitHub/Gitee Provider）
+- [x] 双源支持框架已完成（GitHub/Mirror Provider）
 - [x] 智能源选择逻辑已完成（语言检测 + 速度测试）
-- [x] 国内用户自动使用 Gitee 源更新
-- [x] 海外用户继续使用 GitHub 源
+- [x] 国内用户自动使用镜像加速源更新
+- [x] 海外用户继续使用 GitHub 直连
 - [x] 用户可手动切换更新源
-- [x] Gitee 仅上传增量包（< 100M）
-- [x] GitHub 保持完整包作为手动下载入口
+- [x] 镜像加速源下载失败时自动降级到 GitHub 直连
+- [x] GitHub 保持完整包作为唯一文件存储
 - [x] electron-builder 配置支持 Generic Provider
-- [x] 配置 Gitee Release 上传流程
 - [x] 在设置页面添加"更新源"选项
 - [x] GitHub Actions 自动发布
 
@@ -197,7 +232,7 @@ ipc: 'update-source:changed', { from: string, to: string }
 - [x] 创建 `index.js` 统一暴露 API
 - [x] 创建 `providers/baseProvider.js` 抽象基类
 - [x] 创建 `providers/githubProvider.js` (从原 githubReleaseProvider 重构)
-- [x] 创建 `providers/giteeProvider.js` (新增)
+- [x] 创建 `providers/mirrorProvider.js` (替代 giteeProvider)
 - [x] 创建 `regionDetector.js` 检测用户地区/语言
 - [x] 创建 `speedTester.js` 测试源响应速度
 - [x] 更新 `config.js` 添加 updateSource 配置项
@@ -208,7 +243,7 @@ ipc: 'update-source:changed', { from: string, to: string }
 
 - [x] 修改 electron-builder 配置，支持 Generic Provider
 - [x] GitHubProvider 已实现
-- [x] GiteeProvider 已实现
+- [x] MirrorProvider 已实现
 - [x] 智能源选择逻辑已集成到 autoUpdater
 - [x] 在设置页面添加"更新源"选项
 - [x] 添加 IPC 接口 `update-source:get` 和 `update-source:set`
@@ -216,8 +251,6 @@ ipc: 'update-source:changed', { from: string, to: string }
 
 ### Phase 3: 部署配置 (已完成)
 
-- [x] 配置 Gitee Release 上传流程
-- [x] 启用 differential update 打包配置
 - [x] 配置 GitHub Actions 自动发布
 - [x] 创建部署文档
 
@@ -228,13 +261,11 @@ ipc: 'update-source:changed', { from: string, to: string }
    └─ git tag v0.4.2 && git push origin v0.4.2
 
 2. GitHub Actions 自动触发
-   ├─ 构建 AppImage + 增量包
-   ├─ 发布到 GitHub (rexlevin/canbox)
-   └─ 同步发布到 Gitee (rexlevin/canbox-release)
+   ├─ 构建 AppImage
+   └─ 发布到 GitHub (rexlevin/canbox)
 
-3. 两个平台同步拥有
-   ├─ GitHub: 完整包 + 增量包 + latest.yml
-   └─ Gitee: 完整包 + 增量包 + latest.yml
+3. 国内用户通过镜像加速源自动更新
+   └─ 代理从 GitHub Release 拉取文件，无需额外文件存储
 ```
 
 #### CI 环境变量
@@ -242,19 +273,5 @@ ipc: 'update-source:changed', { from: string, to: string }
 | 变量 | 说明 | 获取方式 |
 |------|------|----------|
 | `GITHUB_TOKEN` | GitHub 自动授权 | Actions 自动提供 |
-| `GITEE_TOKEN` | Gitee Access Token | 需在 Gitee 设置 |
 
-#### Gitee Access Token 配置
-
-1. 访问 https://gitee.com/personal_access_tokens
-2. 点击"生成新令牌"
-3. 勾选 `projects` 权限
-4. 创建后复制 token
-5. 在 GitHub 仓库 Settings → Secrets 中添加 `GITEE_TOKEN`
-
-#### 创建 Gitee 发布仓库
-
-1. 访问 https://gitee.com/new
-2. 创建新仓库，设置为**公开**
-3. 仓库名称：`canbox-release`
-4. 不需要初始化 README
+**说明**：镜像加速方案不需要额外的 Token 或第三方服务配置。

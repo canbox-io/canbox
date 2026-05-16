@@ -630,7 +630,7 @@ function initIpcHandlers() {
     // 设置更新源
     ipcMain.handle('update-source:set', async (event, source) => {
         try {
-            if (!['github', 'gitee', 'auto'].includes(source)) {
+            if (!['github', 'mirror', 'auto'].includes(source)) {
                 return { success: false, error: 'Invalid source' };
             }
 

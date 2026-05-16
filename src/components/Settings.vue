@@ -197,8 +197,8 @@
                         <el-radio value="github" class="update-source-radio">
                             {{ $t('autoUpdate.settings.updateSourceGithub') }}
                         </el-radio>
-                        <el-radio value="gitee" class="update-source-radio">
-                            {{ $t('autoUpdate.settings.updateSourceGitee') }}
+                        <el-radio value="mirror" class="update-source-radio">
+                            {{ $t('autoUpdate.settings.updateSourceMirror') }}
                         </el-radio>
                     </el-radio-group>
                     <div class="current-source">
@@ -290,7 +290,7 @@ const currentSource = ref('');
 // 当前源显示文本
 const currentSourceDisplay = computed(() => {
     if (currentSource.value === 'github') return 'GitHub';
-    if (currentSource.value === 'gitee') return 'Gitee';
+    if (currentSource.value === 'mirror') return t('autoUpdate.settings.updateSourceMirror');
     if (currentSource.value === 'auto') return currentSource.value;
     return currentSource.value || '-';
 });

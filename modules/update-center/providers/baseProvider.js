@@ -7,7 +7,7 @@ class BaseProvider {
     /**
      * 构造函数
      * @param {Object} options - 配置选项
-     * @param {string} options.name - 提供商名称 (github/gitee)
+     * @param {string} options.name - 提供商名称 (github/mirror)
      * @param {string} options.owner - 仓库所有者
      * @param {string} options.repo - 仓库名称
      */

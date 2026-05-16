@@ -355,7 +355,7 @@
             "skippedVersionsList": "跳过的版本：{versions}",
             "updateSource": "更新源",
             "updateSourceGithub": "GitHub",
-            "updateSourceGitee": "Gitee",
+            "updateSourceMirror": "镜像加速",
             "updateSourceAuto": "自动（推荐）",
             "updateSourceAutoDesc": "根据网络状况智能选择",
             "currentSource": "当前源",

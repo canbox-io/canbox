@@ -45,13 +45,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Clean debug files
+        run: rm -f dist/builder-debug.yml dist/builder-effective-config.yaml
+
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
           path: |
             dist/*.AppImage
-            dist/*-delta*.AppImage
             dist/latest-linux.yml
 
   # Windows 构建 job
@@ -78,13 +80,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Clean debug files
+        run: Remove-Item -Force -ErrorAction SilentlyContinue dist/builder-debug.yml, dist/builder-effective-config.yaml
+
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: |
             dist/*.exe
-            dist/*.yml
+            dist/latest*.yml
 
   # 发布 job（依赖所有构建 job）
   release:
@@ -110,104 +115,29 @@ jobs:
       - name: List artifacts
         run: ls -la dist/linux/ dist/windows/ || true
 
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          NOTES=$(awk "/## \[$VERSION\]/{flag=1; next} /## \[/{flag=0} flag" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="Canbox v$VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: "Canbox v${{ steps.changelog.outputs.version }}"
+          body: ${{ steps.changelog.outputs.notes }}
           files: |
             dist/linux/*.AppImage
-            dist/linux/*-delta*.AppImage
             dist/linux/latest-linux.yml
             dist/windows/*.exe
-            dist/windows/*.yml
-          generate_release_notes: true
+            dist/windows/latest*.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Gitee Release
-        if: success()
-        run: |
-          # Get tag name
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG_NAME#v}
-
-          # Generate release notes from GitHub
-          RELEASE_NOTES="Canbox $VERSION 自动发布"
-
-          # Create Gitee release via API (使用独立的 canbox-release 仓库)
-          # 注意：Gitee API 需要 target_commitish 参数
-          curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
-            -d "{
-              \"tag_name\": \"$TAG_NAME\",
-              \"name\": \"Canbox $VERSION\",
-              \"body\": \"$RELEASE_NOTES\",
-              \"target_commitish\": \"master\",
-              \"prerelease\": false
-            }"
-        shell: bash
-
-      - name: Upload to Gitee Release
-        if: success()
-        run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-
-          RELEASE_ID=$(curl -s --connect-timeout 30 --max-time 60 "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/tags/$TAG_NAME" \
-            -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" | grep -o '"id":[0-9]*' | head -1 | grep -o '[0-9]*')
-
-          if [ -z "$RELEASE_ID" ]; then
-            echo "Failed to get Gitee release ID"
-            exit 1
-          fi
-
-          upload_with_retry() {
-            local FILE=$1
-            local MAX_RETRIES=3
-            local RETRY=0
-            while [ $RETRY -lt $MAX_RETRIES ]; do
-              echo "Uploading $FILE to Gitee (attempt $((RETRY+1))/$MAX_RETRIES)..."
-              if curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
-                -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
-                --connect-timeout 30 \
-                --max-time 600 \
-                -F "file=@$FILE"; then
-                echo ""
-                echo "Successfully uploaded $FILE"
-                return 0
-              fi
-              RETRY=$((RETRY+1))
-              if [ $RETRY -lt $MAX_RETRIES ]; then
-                echo "Upload failed, retrying in 10s..."
-                sleep 10
-              fi
-            done
-            echo "Failed to upload $FILE after $MAX_RETRIES attempts"
-            return 1
-          }
-
-          if [ -d "dist/linux" ]; then
-            for FILE in dist/linux/*-delta*.AppImage; do
-              if [ -f "$FILE" ]; then
-                upload_with_retry "$FILE" || true
-              fi
-            done
-
-            if [ -f "dist/linux/latest-linux.yml" ]; then
-              upload_with_retry "dist/linux/latest-linux.yml" || true
-            fi
-          fi
-
-          if [ -d "dist/windows" ]; then
-            for FILE in dist/windows/*.exe; do
-              if [ -f "$FILE" ]; then
-                upload_with_retry "$FILE" || true
-              fi
-            done
-
-            for FILE in dist/windows/*.yml; do
-              if [ -f "$FILE" ]; then
-                upload_with_retry "$FILE" || true
-              fi
-            done
-          fi
-        shell: bash

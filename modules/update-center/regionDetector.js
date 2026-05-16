@@ -62,8 +62,8 @@ async function getRecommendedSource() {
 
     if (detection.isChina) {
         return {
-            source: 'gitee',
-            reason: `系统语言为 ${detection.locale}，推荐使用 Gitee 源`
+            source: 'mirror',
+            reason: `系统语言为 ${detection.locale}，推荐使用镜像加速源`
         };
     }
 

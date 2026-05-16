@@ -9,7 +9,7 @@
  * - 安装更新
  * - 版本跳过
  * - 事件通知
- * - 多源支持（GitHub/Gitee）
+ * - 多源支持（GitHub/镜像加速）
  */
 
 const { autoUpdater } = require('electron-updater');
@@ -28,7 +28,7 @@ const {
     recordSourceResult
 } = require('./config');
 const GitHubProvider = require('./providers/githubProvider');
-const GiteeProvider = require('./providers/giteeProvider');
+const MirrorProvider = require('./providers/mirrorProvider');
 const { detectRegion, getRecommendedSource } = require('./regionDetector');
 const { getBestSource } = require('./speedTester');
 
@@ -212,9 +212,7 @@ class AutoUpdater {
 
         const bestSource = await getBestSource({
             githubOwner: 'rexlevin',
-            githubRepo: 'canbox',
-            giteeOwner: 'rexlevin',
-            giteeRepo: 'canbox'
+            githubRepo: 'canbox'
         });
 
         if (bestSource) {
@@ -228,13 +226,13 @@ class AutoUpdater {
 
     /**
      * 设置 feedURL
-     * @param {string} source - 源名称 (github/gitee)
+     * @param {string} source - 源名称 (github/mirror)
      * @private
      */
     _setFeedURL(source) {
         const providers = {
             github: new GitHubProvider({ owner: 'rexlevin', repo: 'canbox' }),
-            gitee: new GiteeProvider({ owner: 'rexlevin', repo: 'canbox' })
+            mirror: new MirrorProvider({ owner: 'rexlevin', repo: 'canbox' })
         };
 
         const provider = providers[source];
@@ -470,9 +468,7 @@ class AutoUpdater {
         const recommended = await getRecommendedSource();
         const bestSource = await getBestSource({
             githubOwner: 'rexlevin',
-            githubRepo: 'canbox',
-            giteeOwner: 'rexlevin',
-            giteeRepo: 'canbox'
+            githubRepo: 'canbox'
         });
 
         return {

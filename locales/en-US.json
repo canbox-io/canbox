@@ -354,7 +354,7 @@
             "skippedVersionsList": "Skipped versions: {versions}",
             "updateSource": "Update Source",
             "updateSourceGithub": "GitHub",
-            "updateSourceGitee": "Gitee",
+            "updateSourceMirror": "Mirror",
             "updateSourceAuto": "Auto (Recommended)",
             "updateSourceAutoDesc": "Smart selection based on network",
             "currentSource": "Current Source",
