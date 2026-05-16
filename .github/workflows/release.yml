@@ -41,7 +41,7 @@ jobs:
         run: npm ci
 
       - name: Build Linux AppImage
-        run: npm run build-appimage
+        run: npm run build-appimage -- --publish never
 
       - name: Clean debug files
         run: rm -f dist/builder-debug.yml dist/builder-effective-config.yaml
@@ -74,7 +74,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows exe
-        run: npm run build-exe
+        run: npm run build-exe -- --publish never
 
       - name: Clean debug files
         run: Remove-Item -Force -ErrorAction SilentlyContinue dist/builder-debug.yml, dist/builder-effective-config.yaml
