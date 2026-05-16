@@ -370,8 +370,11 @@ const createWindow = () => {
     } else {
         const indexPath = path.join(__dirname, './build/index.html');
         console.info('now load app==%s', indexPath);
-        // 使用 file 协议加载本地文件
-        win.loadFile(indexPath);
+        win.loadURL(require('url').format({
+            pathname: indexPath,
+            protocol: 'file:',
+            slashes: true
+        }));
     }
 
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
