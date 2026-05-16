@@ -24,11 +24,6 @@
         "appId": "com.github.lizl6.canbox",
         "artifactName": "${productName}-${os}-${arch}.${ext}",
         "asar": true,
-        "publish": {
-            "provider": "github",
-            "owner": "rexlevin",
-            "repo": "canbox"
-        },
         "files": [
             "build/**/*",
             "childprocessEntry.js",
