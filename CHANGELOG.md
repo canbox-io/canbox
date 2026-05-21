@@ -5,6 +5,28 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.7] - 2026-05-21
+
+### feat | 新功能 / Features
+
+支持更新后台下载与进度查看
+升级版本至 v0.4.6 并优化更新对话框交互体验
+
+Support background download with progress tracking
+Upgrade to v0.4.6 and improve update dialog interaction
+
+### ci | CI/CD / CI/CD
+
+添加前端构建步骤（修复 CI 构建缺失 Vite 前端页面问题）
+
+Add frontend build step to CI (fix missing Vite-built pages in CI artifacts)
+
+### docs | 文档 / Documentation
+
+更新 CHANGELOG
+
+Update CHANGELOG
+
 ## [0.4.5] - 2026-05-21
 
 ### feat | 新功能 / Features
