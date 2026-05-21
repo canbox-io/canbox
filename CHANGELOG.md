@@ -5,6 +5,36 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.5] - 2026-05-21
+
+### feat | 新功能 / Features
+
+新增操作历史记录功能，支持多语言和分页加载
+实现双源更新系统及跨平台自动发布流程
+增强 Zoom 功能：键盘快捷键 + 设置界面控制
+
+Add operation history with i18n and pagination
+Implement dual-source update system and cross-platform auto-release
+Enhance Zoom with keyboard shortcuts and Settings UI
+
+### chore | 维护 / Maintenance
+
+将 .codebuddy 添加到 gitignore
+
+Add .codebuddy to gitignore
+
+### docs | 文档 / Documentation
+
+添加操作历史记录文档
+添加分级通知和操作历史功能设计文档
+完成双源更新机制文档并归档
+添加变更工作流文档
+
+Add operation history documentation
+Add notification guidelines documentation
+Complete dual-source update documentation
+Add change workflow documentation
+
 ## [0.4.0] - 2026-05-09
 
 ### Added
