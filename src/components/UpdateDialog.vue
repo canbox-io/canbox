@@ -4,7 +4,7 @@
     :title="dialogTitle"
     width="600px"
     :close-on-click-modal="false"
-    :close-on-press-escape="false"
+    :close-on-press-escape="showCloseButton"
     :show-close="showCloseButton"
     @close="handleClose"
   >
@@ -149,13 +149,6 @@
           {{ t('autoUpdate.retry') }}
         </el-button>
 
-        <!-- 关闭按钮 -->
-        <el-button
-          v-if="showCloseButton"
-          @click="handleClose"
-        >
-          {{ t('autoUpdate.close') }}
-        </el-button>
       </div>
     </template>
   </el-dialog>
