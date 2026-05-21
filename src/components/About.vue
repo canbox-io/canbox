@@ -14,16 +14,27 @@
                     <p><strong>{{ t('about.license') }}:</strong> {{ packageLicense }}</p>
                     <div class="version-line">
                         <span><strong>{{ t('about.version') }}:</strong> {{ packageVersion }}</span>
-                        <!-- 有更新：显示升级按钮 -->
+                        <!-- 有更新且已下载完成：显示安装按钮 -->
                         <el-button
-                            v-if="hasUpdate && !hasError"
+                            v-if="isDownloaded && !hasError"
+                            type="success"
+                            size="small"
+                            @click="handleInstallUpdate"
+                            class="upgrade-button"
+                        >
+                            <el-icon><Download /></el-icon>
+                            {{ t('autoUpdate.restartToUpdate') }}
+                        </el-button>
+                        <!-- 有更新（未下载/下载中）：显示升级按钮 -->
+                        <el-button
+                            v-else-if="hasUpdate && !hasError"
                             type="primary"
                             size="small"
                             @click="handleUpgrade"
                             class="upgrade-button"
                         >
                             <el-icon><Top /></el-icon>
-                            {{ t('autoUpdate.upgrade') }}
+                            {{ isDownloading ? t('autoUpdate.viewProgress') : t('autoUpdate.upgrade') }}
                         </el-button>
                         <!-- 有错误或正常状态：显示检查更新按钮 -->
                         <el-button
@@ -36,6 +47,20 @@
                             <el-icon><Refresh /></el-icon>
                             {{ isCheckingUpdate ? t('autoUpdate.checkingForUpdates') : t('autoUpdate.checkForUpdates') }}
                         </el-button>
+                    </div>
+                    <!-- 下载进度条（关闭弹层后在此查看） -->
+                    <div v-if="isDownloading" class="about-download-progress">
+                        <div class="download-status">
+                            <el-icon class="is-loading"><Loading /></el-icon>
+                            <span>{{ t('autoUpdate.downloading') }}</span>
+                            <span class="download-percent">{{ updateStore.downloadProgress.toFixed(0) }}%</span>
+                        </div>
+                        <el-progress
+                            :percentage="updateStore.downloadProgress"
+                            :stroke-width="8"
+                            :show-text="false"
+                        />
+                        <div class="download-size-text">{{ updateStore.formattedDownloadSize }}</div>
                     </div>
                 </div>
             </div>
@@ -100,7 +125,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Link, Document, Top, Refresh } from '@element-plus/icons-vue';
+import { Link, Document, Top, Refresh, Download, Loading } from '@element-plus/icons-vue';
 import { useUpdateStore } from '@/stores/updateStore';
 import { formatErrorForDisplay } from '@/utils/errorMessages';
 import notification from '../utils/notification';
@@ -117,6 +142,14 @@ const hasUpdate = computed(() => updateStore.hasUpdate);
 
 // 检查是否有错误
 const hasError = computed(() => updateStore.hasError);
+
+// 下载相关状态
+const isDownloading = computed(() => updateStore.isDownloading);
+const isDownloaded = computed(() => {
+  return updateStore.hasUpdate
+    && updateStore.updateInfo?.downloaded
+    && !updateStore.isDownloading;
+});
 
 // 格式化错误信息用于显示
 const errorDisplay = computed(() => {
@@ -240,6 +273,18 @@ const handleRetryUpdate = async () => {
     }
 };
 
+// 处理安装更新（已下载完成时）
+const handleInstallUpdate = async () => {
+    try {
+        if (window.api && window.api.autoUpdate) {
+            await window.api.autoUpdate.installUpdate();
+        }
+    } catch (error) {
+        console.error('[About.vue] 安装更新失败:', error);
+        notification.error(t('autoUpdate.updateError'));
+    }
+};
+
 // 处理手动下载
 const handleManualDownload = () => {
     // 跳转到 GitHub Releases latest
@@ -334,6 +379,37 @@ const handleManualDownload = () => {
     font-size: 15px;
     padding: 8px 16px;
     height: auto;
+}
+
+.about-download-progress {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #f0f9ff;
+    border: 1px solid #b3d8ff;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.download-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #303133;
+}
+
+.download-percent {
+    font-weight: 600;
+    color: #409eff;
+    margin-left: auto;
+}
+
+.download-size-text {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #909399;
+    text-align: right;
 }
 
 .system-info {

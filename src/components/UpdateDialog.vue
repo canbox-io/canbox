@@ -61,6 +61,15 @@
           :format="progressFormat"
         />
         <div class="progress-text">{{ downloadProgress.text }}</div>
+        <!-- 后台下载提示 -->
+        <div class="background-notice">
+          <el-alert
+            :title="t('autoUpdate.downloadInBackgroundDesc')"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+        </div>
       </div>
 
       <!-- 安装进度 -->
@@ -89,12 +98,14 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <!-- 下载中/安装中 - 显示取消按钮 -->
+        <!-- 安装中 - 不显示关闭相关按钮，由 showCloseButton 控制 X 隐藏 -->
+
+        <!-- 后台下载提示按钮（下载中：点击关闭弹层，下载在后台继续） -->
         <el-button
-          v-if="isDownloading || isInstalling"
-          @click="handleCancel"
+          v-if="isDownloading && !isInstalling"
+          @click="handleClose"
         >
-          {{ t('common.cancel') }}
+          {{ t('autoUpdate.downloadInBackground') }}
         </el-button>
 
 <!-- AppImage 模式：仅显示退出按钮 -->
@@ -158,8 +169,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MarkdownIt from 'markdown-it';
+import { useUpdateStore } from '@/stores/updateStore';
 
 const { t } = useI18n();
+const updateStore = useUpdateStore();
 
 // Props
 const props = defineProps({
@@ -190,6 +203,15 @@ const installProgress = ref({
 });
 const error = ref(null);
 
+// 从 store 恢复下载进度（弹层重新打开时）
+function restoreDownloadProgress() {
+  if (updateStore.isDownloading) {
+    downloadProgress.value.show = true;
+    downloadProgress.value.percent = updateStore.downloadProgress;
+    downloadProgress.value.text = updateStore.formattedDownloadSize;
+  }
+}
+
 // Computed
 const dialogTitle = computed(() => {
   if (error.value) return t('autoUpdate.updateFailed');
@@ -200,16 +222,18 @@ const dialogTitle = computed(() => {
   return t('autoUpdate.newVersionAvailable');
 });
 
+// 允许关闭弹层：仅安装中锁定，下载中允许关闭（后台下载）
 const showCloseButton = computed(() => {
-  return !isDownloading.value && !isInstalling.value;
+  return !isInstalling.value;
 });
 
 const hasUpdate = computed(() => {
   return props.updateInfo !== null && !error.value;
 });
 
+// 使用 store 的 isDownloading 状态（跨弹层生命周期持久化）
 const isDownloading = computed(() => {
-  return downloadProgress.value.show;
+  return updateStore.isDownloading || downloadProgress.value.show;
 });
 
 const isInstalling = computed(() => {
@@ -292,12 +316,6 @@ const handleInstall = () => {
   }
 };
 
-const handleCancel = () => {
-  downloadProgress.value.show = false;
-  installProgress.value.show = false;
-  emit('cancel');
-};
-
 const handleSkip = () => {
   if (props.updateInfo?.version) {
     emit('skip', props.updateInfo.version);
@@ -365,6 +383,8 @@ const removeEventListeners = () => {
 // Lifecycle
 onMounted(() => {
   setupEventListeners();
+  // 组件挂载时，如果后台有下载在进行，恢复进度显示
+  restoreDownloadProgress();
 });
 
 onUnmounted(() => {
@@ -374,6 +394,10 @@ onUnmounted(() => {
 // Watch props
 watch(() => props.modelValue, (newVal) => {
   dialogVisible.value = newVal;
+  // 弹层打开时，如果后台有下载在进行，恢复进度显示
+  if (newVal) {
+    restoreDownloadProgress();
+  }
 });
 </script>
 
@@ -554,6 +578,14 @@ export default {
 .download-progress,
 .install-progress {
   margin: 20px 0;
+}
+
+.background-notice {
+  margin-top: 15px;
+}
+
+.background-notice :deep(.el-alert__title) {
+  font-size: 14px;
 }
 
 .progress-text {
