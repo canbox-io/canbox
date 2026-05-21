@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Frontend (Vite)
+        run: npm run build
+
       - name: Build Linux AppImage
         run: npm run build-appimage -- --publish never
 
@@ -72,6 +75,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build Frontend (Vite)
+        run: npm run build
 
       - name: Build Windows exe
         run: npm run build-exe -- --publish never
