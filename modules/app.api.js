@@ -387,6 +387,25 @@ const electronStore = {
     }
 }
 
+const ipcSendOpenUrl = (url) => {
+    if (!window.appId) {
+        throw new Error('appId is not set');
+    }
+    let returnValue = ipcRenderer.sendSync('msg-openUrl', {
+        url,
+        appId: window.appId
+    });
+    if (returnValue instanceof Error) throw returnValue;
+    return JSON.parse(returnValue);
+};
+
+const openUrl = (url) => {
+    return new Promise((resolve, reject) => {
+        const ret = ipcSendOpenUrl(url);
+        ret.success ? resolve() : reject(ret.msg);
+    });
+};
+
 /**
  * 获取 canbox 当前语言设置
  * @returns {string} 当前语言代码，如 'zh-CN' 或 'en-US'
@@ -420,6 +439,7 @@ window.canbox = {
     store: electronStore,
     registerCloseCallback,
     getLocale,
+    openUrl,
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

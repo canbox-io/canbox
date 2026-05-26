@@ -167,6 +167,28 @@ canbox.hello();  # hello, hope you have a nice day
 
 Preload follows the `CommonJS` specification, you can use `require` to import nodejs modules:
 
+# External URLs
+
+External URLs in APPs are automatically opened in the default browser without any extra handling. The behavior is as follows:
+
+- `<a href="https://example.com">` clicks automatically open in the default browser
+- `<a target="_blank" href="https://example.com">` also opens in the default browser
+- Internal navigation (e.g., `file://` protocol, same-origin `http://localhost` jumps) is not affected and works normally within the window
+
+If you need to actively open an external URL in JS code, use the `canbox.openUrl()` API:
+
+```javascript
+canbox.openUrl('https://example.com')
+    .then(() => console.log('opened'))
+    .catch(err => console.error('failed:', err));
+```
+
+If you need to open a URL within an Electron window (instead of the default browser), use the existing `canbox.win.createWindow()`:
+
+```javascript
+canbox.win.createWindow({}, { url: 'https://example.com', title: 'Docs' });
+```
+
 # cb.build.json
 
 Canbox uses asar for packaging. Packaging is performed according to `cb.build.json` content:

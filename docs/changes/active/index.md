@@ -1,8 +1,7 @@
 ---
 title: 进行中的变更
 description: 记录正在实施或讨论中的功能变更
-related_changes:
-  - file-task-manager
+related_changes: []
 ---
 
 # 进行中的变更
@@ -13,7 +12,7 @@ related_changes:
 
 | 项目 | 数量 |
 |------|------|
-| 进行中变更 | 2 |
+| 进行中变更 | 0 |
 
 ---
 
@@ -21,8 +20,6 @@ related_changes:
 
 | 变更名称 | 日期 | 优先级 | 描述 |
 |----------|------|--------|------|
-| [file-task-manager](./file-task-manager.md) | 2026-05-09 | ⭐⭐⭐⭐⭐ | 文件任务管理模块 |
-| [app-open-external-url](./app-open-external-url.md) | 2026-05-25 | ⭐⭐⭐⭐ | APP 外部链接使用默认浏览器打开 |
 
 ---
 

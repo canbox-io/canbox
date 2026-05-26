@@ -282,6 +282,17 @@ declare global {
              * console.log(locale); // 'zh-CN'
              */
             getLocale: () => string;
+
+            /**
+             * 使用默认浏览器打开外部 URL
+             * @param url - 要打开的 URL 地址
+             * @returns Promise<void>
+             * @example
+             * canbox.openUrl('https://example.com')
+             *   .then(() => console.log('opened'))
+             *   .catch(err => console.error(err));
+             */
+            openUrl: (url: string) => Promise<void>;
         };
     }
 

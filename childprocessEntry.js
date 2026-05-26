@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session } = require('electron');
+const { app, BrowserWindow, session, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -113,6 +113,32 @@ process.on('uncaughtException', (error) => {
     console.error('[childprocessEntry] Uncaught exception:', error);
     logger.error('[childprocessEntry] Uncaught exception:', error);
 });
+
+function setupExternalUrlHandler(win) {
+    win.webContents.setWindowOpenHandler(({ url }) => {
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            shell.openExternal(url);
+        }
+        return { action: 'deny' };
+    });
+
+    win.webContents.on('will-navigate', (event, url) => {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                const currentUrl = win.webContents.getURL();
+                const navOrigin = new URL(url).origin;
+                const currentOrigin = new URL(currentUrl).origin;
+                if (navOrigin === currentOrigin) {
+                    return;
+                }
+            } catch (e) {
+                return;
+            }
+            event.preventDefault();
+            shell.openExternal(url);
+        }
+    });
+}
 
 function createAppWindow() {
     try {
@@ -251,6 +277,8 @@ function createAppWindow() {
         if (process.platform === 'win') {
             appWin.setAppDetails({ appId: appId });
         }
+
+        setupExternalUrlHandler(appWin);
 
         // 错误处理
         appWin.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {

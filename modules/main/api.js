@@ -1,4 +1,4 @@
-const { ipcMain, app, dialog } = require('electron');
+const { ipcMain, app, dialog, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const logger = require('@modules/utils/logger');
@@ -425,6 +425,24 @@ function initCanboxDbIpcHandlers() {
     });
 }
 
+function initOpenUrlIpcHandlers() {
+    ipcMain.on('msg-openUrl', (event, args) => {
+        const url = args.url;
+        if (!url) {
+            logger.warn('[api.js] msg-openUrl received empty url');
+            event.returnValue = JSON.stringify({ success: false, msg: 'url is required' });
+            return;
+        }
+        logger.info('[api.js] Opening external URL: {}', url);
+        shell.openExternal(url).then(() => {
+            event.returnValue = JSON.stringify({ success: true });
+        }).catch(err => {
+            logger.error('[api.js] Failed to open external URL: {}', err.message);
+            event.returnValue = JSON.stringify({ success: false, msg: err.message });
+        });
+    });
+}
+
 /**
  * 统一初始化所有 IPC 消息处理逻辑
  */
@@ -439,6 +457,7 @@ function initApiIpcHandlers() {
     initDownloadCanboxTypesIpcHandlers();
     initSudoIpcHandlers();
     initI18nIpcHandlers();
+    initOpenUrlIpcHandlers();
 }
 
 module.exports = initApiIpcHandlers;

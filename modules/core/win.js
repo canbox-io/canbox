@@ -1,4 +1,4 @@
-const { BrowserWindow, Notification } = require('electron');
+const { BrowserWindow, Notification, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const logger = require('@modules/utils/logger');
@@ -12,6 +12,32 @@ const { getAppsDevStore, getAppsStore } = require('@modules/main/storageManager'
 
 // 初始化 windowManager 实例（现在集成到 appWindowManager）
 const windowManager = require('@modules/integrated/appWindowManager');
+
+function setupExternalUrlHandler(win) {
+    win.webContents.setWindowOpenHandler(({ url }) => {
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            shell.openExternal(url);
+        }
+        return { action: 'deny' };
+    });
+
+    win.webContents.on('will-navigate', (event, url) => {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+                const currentUrl = win.webContents.getURL();
+                const navOrigin = new URL(url).origin;
+                const currentOrigin = new URL(currentUrl).origin;
+                if (navOrigin === currentOrigin) {
+                    return;
+                }
+            } catch (e) {
+                return;
+            }
+            event.preventDefault();
+            shell.openExternal(url);
+        }
+    });
+}
 
 /**
  * 窗口操作模块
@@ -87,7 +113,9 @@ const winFactory = {
 
             win.loadURL(loadURL);
             win.setMenu(null);
-            
+
+            setupExternalUrlHandler(win);
+
             // 监听 ESC 键关闭窗口
             if (params.escClose) {
                 win.webContents.on('before-input-event', (event, input) => {

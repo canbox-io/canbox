@@ -167,6 +167,28 @@ canbox.hello();  # hello, hope you have a nice day
 
 preload遵循 `CommonJS` 规范，可以使用 `require` 来引入 nodejs 模块：
 
+# 外部链接
+
+APP 中的外部链接会自动使用默认浏览器打开，无需额外处理。具体行为：
+
+- `<a href="https://example.com">` 点击后自动用默认浏览器打开
+- `<a target="_blank" href="https://example.com">` 同样用默认浏览器打开
+- APP 内部导航（如 `file://` 协议、同源 `http://localhost` 跳转）不受影响，正常在窗口内跳转
+
+如果需要在 JS 代码中主动打开外部链接，可以使用 `canbox.openUrl()` API：
+
+```javascript
+canbox.openUrl('https://example.com')
+    .then(() => console.log('已打开'))
+    .catch(err => console.error('打开失败:', err));
+```
+
+如果需要在 Electron 窗口内打开 URL（而非默认浏览器），请使用已有的 `canbox.win.createWindow()`：
+
+```javascript
+canbox.win.createWindow({}, { url: 'https://example.com', title: '文档' });
+```
+
 # cb.build.json
 
 canbox使用asar进行打包，打包依据 `cb.build.json` 内容进行：
