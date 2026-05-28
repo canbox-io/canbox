@@ -5,6 +5,20 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.2] - 2026-05-28
+
+### fix | 问题修复 / Bug Fixes
+
+修复 sudo 模块在 Node.js v22+ 下因 util.isObject 移除导致的提权执行失败问题
+替换 sudo-prompt 为 @vscode/sudo-prompt 以兼容 Electron v41
+修复 canbox.sudo.exec 错误传播链中 reject 传字符串导致 err.message 为 undefined 的问题
+支持 name 参数传入中文等非 ASCII 字符，内部自动净化为系统认证对话框可接受的格式
+
+Fix sudo module failure on Node.js v22+ due to removed util.isObject API
+Replace sudo-prompt with @vscode/sudo-prompt for Electron v41 compatibility
+Fix error propagation in canbox.sudo.exec where reject passed string instead of Error object
+Support non-ASCII characters in name parameter with automatic sanitization for system auth dialogs
+
 ## [0.5.1] - 2026-05-28
 
 ### feat | 新功能 / Features
