@@ -5,6 +5,24 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.3] - 2026-05-30
+
+### feat | 新功能 / Features
+
+新增创建网页应用功能，输入网址自动抓取网站信息生成桌面 WebApp
+支持 WebApp 导航快捷键、右键菜单和同源链接窗口内打开
+支持英文别名系统，中文应用名快捷方式包含英文别名便于搜索
+
+Add web app creation feature with auto site info scraping
+Support WebApp navigation shortcuts, context menu and same-origin link handling
+Add English alias system for Chinese app shortcuts
+
+### docs | 文档 / Documentation
+
+更新变更文档，新增 web-app-creator 功能记录
+
+Update change docs with web-app-creator feature record
+
 ## [0.5.2] - 2026-05-28
 
 ### fix | 问题修复 / Bug Fixes
