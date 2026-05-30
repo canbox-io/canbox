@@ -76,6 +76,8 @@ Or you can use the `jsconfig.json` file with the following example content:
 
 # app.json
 
+### Standard APP Example
+
 ```json
 {
     "name": "Clipboard",
@@ -104,11 +106,42 @@ Or you can use the `jsconfig.json` file with the following example content:
 }
 ```
 
+### WebApp Example
+
+WebApp is a special type of APP that wraps a webpage as a standalone desktop application. The `main` field points to an HTTP URL instead of a local file.
+
+```json
+{
+    "id": "com.canbox.webapp.a1b2c3d4",
+    "name": "YiYan",
+    "alias": "yiyan",
+    "version": "1.0.0",
+    "description": "Web App: https://yiyan.baidu.com",
+    "author": "",
+    "logo": "logo.png",
+    "main": "https://yiyan.baidu.com",
+    "type": "webapp",
+    "webappOptions": {
+        "showNavbar": false
+    },
+    "window": {
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+    }
+}
+```
+
 ### Field Descriptions
 
 | Field | Parent | Type | Constraint | Description |
 |-------|--------|------:|:----------:|-------------|
 | id | | string | 1 | App application identifier<br>1. Multi-segment composition, such as: `com.gitee.dev001.clipboard`<br>2. Each segment consists of lowercase letters and numbers, starting with a lowercase letter<br>3. Only the last segment can use the `-` symbol |
+| type | | string | * | APP type. `"webapp"` indicates a web application where `main` points to an HTTP URL. Omit or leave empty for standard local APPs |
+| alias | | string | * | English alias for the APP name. Used in shortcut naming for non-ASCII named apps (e.g. Chinese names), making them searchable in launcher tools. Auto-extracted from URL domain for WebApps |
+| webappOptions | | object | * | WebApp-specific options, only valid when `type` is `"webapp"` |
+| webappOptions.showNavbar | webappOptions | boolean | * | Whether to show the navigation bar (back/forward/refresh). Default: `false` |
 | window | | object | 1 | Same as BrowserWindow parameters in Electron |
 | platform | | array | * | windows, darwin, linux<br>Platforms supported by plugin apps, this is `optional`, **currently defaults to full platform support** |
 | categories | | array | * | App category, at most the first two are taken |
@@ -174,6 +207,18 @@ External URLs in APPs are automatically opened in the default browser without an
 - `<a href="https://example.com">` clicks automatically open in the default browser
 - `<a target="_blank" href="https://example.com">` also opens in the default browser
 - Internal navigation (e.g., `file://` protocol, same-origin `http://localhost` jumps) is not affected and works normally within the window
+
+### WebApp Link Behavior
+
+When `app.json` has `type: "webapp"`, link handling differs from standard APPs:
+
+| Link Type | Standard APP | WebApp |
+|-----------|-------------|--------|
+| Same-origin `target="_blank"` | Opens in default browser | **Opens within the window** |
+| Cross-origin links | Opens in default browser | Opens in default browser |
+| `file://` protocol | Opens within the window | N/A (WebApp has no local files) |
+
+WebApp navigation also supports keyboard shortcuts: `Alt+←` (back), `Alt+→` (forward), `Ctrl+R`/`F5` (refresh), and a right-click context menu with navigation options.
 
 If you need to actively open an external URL in JS code, use the `canbox.openUrl()` API:
 
