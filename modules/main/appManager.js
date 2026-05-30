@@ -196,7 +196,14 @@ function getAppInfo(uid) {
         readFileWithErrorHandling(path.join(appPath, 'HISTORY.md'))
     ];
 
-    const msg = (readme || history) ? null : '部分文件读取失败';
+    let isWebApp = false;
+    try {
+        const appJsonContent = fs.readFileSync(path.join(appPath, 'app.json'), 'utf8');
+        const appJson = JSON.parse(appJsonContent);
+        isWebApp = appJson.type === 'webapp';
+    } catch (e) { /* ignore */ }
+
+    const msg = (readme || history || isWebApp) ? null : '部分文件读取失败';
     return { success: null === msg, data: { readme, history }, msg };
 }
 

@@ -13,9 +13,19 @@ const { getAppsDevStore, getAppsStore } = require('@modules/main/storageManager'
 // 初始化 windowManager 实例（现在集成到 appWindowManager）
 const windowManager = require('@modules/integrated/appWindowManager');
 
-function setupExternalUrlHandler(win) {
+function setupExternalUrlHandler(win, isWebApp = false) {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            if (isWebApp) {
+                try {
+                    const currentUrl = win.webContents.getURL();
+                    const navOrigin = new URL(url).origin;
+                    const currentOrigin = new URL(currentUrl).origin;
+                    if (navOrigin === currentOrigin) {
+                        return { action: 'allow' };
+                    }
+                } catch (e) { /* fallthrough */ }
+            }
             shell.openExternal(url);
         }
         return { action: 'deny' };

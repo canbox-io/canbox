@@ -5,6 +5,9 @@
       <el-button type="primary" @click="importApp">
         {{ $t('appList.importApp') }}
       </el-button>
+      <el-button @click="openCreateWebApp">
+        {{ $t('webApp.createBtn') }}
+      </el-button>
       <div class="secondary-actions">
         <el-link type="primary" @click="toAnotherTab('appRepos')">
           {{ $t('appList.goToRepo') }}
@@ -74,6 +77,8 @@
       </div>
     </div>
   </CustomDrawer>
+
+  <CreateWebAppDialog ref="createWebAppDialogRef" />
 </template>
 
 <script setup>
@@ -84,9 +89,11 @@ import { useAppStore } from '@/stores/appStore'
 import { md } from '@/utils/markdownRenderer'
 import CustomDrawer from './CustomDrawer.vue'
 import AppCard from './AppCard.vue'
+import CreateWebAppDialog from './CreateWebAppDialog.vue'
 
 const { t } = useI18n()
 const activeTab = ref(0)
+const createWebAppDialogRef = ref(null)
 
 // 定义触发的自定义事件
 const emit = defineEmits(['switchTab'])
@@ -160,6 +167,10 @@ function loadAppsData() {
       console.info(result.msg || '获取APP列表失败')
     }
   })
+}
+
+function openCreateWebApp() {
+  createWebAppDialogRef.value?.open()
 }
 
 // 显示应用信息（点击 logo 或名称时）

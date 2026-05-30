@@ -28,7 +28,10 @@ async function generateShortcuts(appsData) {
 
     try {
         for (const [uid, appItem] of Object.entries(appsData)) {
-            const appName = 'canbox-' + appItem.name;
+            const hasNonAscii = /[^\x00-\x7F]/.test(appItem.name || '');
+            const appName = (appItem.alias && hasNonAscii)
+                ? `canbox-${appItem.name} (${appItem.alias})`
+                : 'canbox-' + appItem.name;
             let shortcutPath, command;
 
             // 确保图标缓存目录存在
@@ -117,7 +120,10 @@ function deleteShortcuts(appsData) {
 
     try {
         Object.entries(appsData).forEach(([uid, appItem]) => {
-            const appName = 'canbox-' + appItem.name;
+            const hasNonAscii = /[^\x00-\x7F]/.test(appItem.name || '');
+            const appName = (appItem.alias && hasNonAscii)
+                ? `canbox-${appItem.name} (${appItem.alias})`
+                : 'canbox-' + appItem.name;
             let shortcutPath;
 
             if (process.platform === 'win32') {

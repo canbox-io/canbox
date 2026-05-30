@@ -457,7 +457,33 @@
             "appDownloadSuccess": "App \"{appName}\" downloaded successfully: v{version}",
             "appInstallSuccess": "App \"{appName}\" installed successfully",
             "appExportSuccess": "App \"{appName}\" exported successfully: v{version}",
-            "appExportFailed": "App \"{appName}\" export failed"
+            "appExportFailed": "App \"{appName}\" export failed",
+            "webAppCreated": "Web app \"{appName}\" created successfully"
         }
+    },
+    "webApp": {
+        "createBtn": "Create Web App",
+        "createTitle": "Create Web App",
+        "createDesc": "Wrap any webpage as a standalone desktop app, just like using local software. Click Fetch after entering a URL to auto-grab the site name and icon, or fill in the details manually. Once created, the app appears in your app list and supports system shortcuts.",
+        "url": "URL",
+        "urlPlaceholder": "Enter URL, e.g. https://example.com",
+        "urlRequired": "Please enter a URL",
+        "urlInvalid": "Please enter a valid URL",
+        "appName": "App Name",
+        "appNamePlaceholder": "Enter app name",
+        "appNameRequired": "Please enter app name",
+        "alias": "English Alias",
+        "aliasPlaceholder": "For shortcut search, e.g. yiyan",
+        "aliasHint": "Shortcut will show as canbox-AppName (alias), easier to find in launchers",
+        "icon": "Icon",
+        "uploadIcon": "Upload Custom Icon",
+        "selectIcon": "Select Icon",
+        "navigationBar": "Navigation Bar",
+        "navigationBarHint": "Show back/forward/refresh navigation bar when enabled",
+        "fetch": "Fetch",
+        "fetchFailed": "Failed to fetch website info: ",
+        "create": "Create",
+        "createSuccess": "Web app created successfully!",
+        "createFailed": "Failed to create web app: "
     }
 }

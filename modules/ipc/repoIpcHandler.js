@@ -534,7 +534,7 @@ async function handleRepoDownloadTask(task) {
                 // repoUrl: 来源仓库地址
                 repoUrl: repoInfo?.url || ''
             }
-        });
+        }, () => {});
 
         taskManager.updateProgress(task.id, 100, '已完成 / Completed', 0);
 

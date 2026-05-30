@@ -114,9 +114,19 @@ process.on('uncaughtException', (error) => {
     logger.error('[childprocessEntry] Uncaught exception:', error);
 });
 
-function setupExternalUrlHandler(win) {
+function setupExternalUrlHandler(win, isWebApp = false) {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            if (isWebApp) {
+                try {
+                    const currentUrl = win.webContents.getURL();
+                    const navOrigin = new URL(url).origin;
+                    const currentOrigin = new URL(currentUrl).origin;
+                    if (navOrigin === currentOrigin) {
+                        return { action: 'allow' };
+                    }
+                } catch (e) { /* fallthrough */ }
+            }
             shell.openExternal(url);
         }
         return { action: 'deny' };
@@ -278,7 +288,13 @@ function createAppWindow() {
             appWin.setAppDetails({ appId: appId });
         }
 
-        setupExternalUrlHandler(appWin);
+        setupExternalUrlHandler(appWin, appJson.type === 'webapp');
+
+        // WebApp 导航增强
+        if (appJson.type === 'webapp') {
+            const { setupWebAppNavigation } = require('@modules/web-app/web-app-navigator');
+            setupWebAppNavigation(appWin);
+        }
 
         // 错误处理
         appWin.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {

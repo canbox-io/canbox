@@ -179,6 +179,16 @@ class AppWindowManager {
                 appWin.setAppDetails({ appId: uid });
             }
 
+            // 设置外部链接处理（WebApp 模式下同源链接在窗口内打开）
+            const { setupExternalUrlHandler } = require('@modules/core/win');
+            setupExternalUrlHandler(appWin, appJson.type === 'webapp');
+
+            // WebApp 导航增强
+            if (appJson.type === 'webapp') {
+                const { setupWebAppNavigation } = require('@modules/web-app/web-app-navigator');
+                setupWebAppNavigation(appWin);
+            }
+
             // 添加错误处理，监控加载失败的情况
             appWin.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
                 logger.error('[{}] Failed to load: {} - {}', uid, errorCode, errorDescription);

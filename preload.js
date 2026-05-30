@@ -359,6 +359,11 @@ contextBridge.exposeInMainWorld(
 
             // 清理过期记录
             cleanup: (maxDays) => ipcRenderer.invoke('canboxDb-cleanup', maxDays),
+        },
+        webApp: {
+            fetchWebsiteInfo: (url) => ipcRenderer.invoke('fetch-website-info', url),
+            createWebApp: (options) => ipcRenderer.invoke('create-web-app', options),
+            getDefaultIconPath: () => ipcRenderer.invoke('get-default-icon-path')
         }
     }
 );

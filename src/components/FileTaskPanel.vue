@@ -100,7 +100,7 @@ import { useFileTaskStore } from '@/stores/fileTaskStore';
 const { t } = useI18n();
 const fileTaskStore = useFileTaskStore();
 
-const panelExpanded = ref(true);
+const panelExpanded = ref(false);
 
 const taskList = computed(() => fileTaskStore.taskList);
 const activeTasks = computed(() => fileTaskStore.activeTasks);

@@ -12,6 +12,8 @@ const { syncReposDownloadStatus } = require('@modules/ipc/repoIpcHandler');
 const i18nModule = require('../../locales');
 const { getCanboxStore } = require('@modules/main/storageManager');
 const canboxDb = require('@modules/core/canboxDb');
+const { fetchWebsiteInfo, downloadIcon } = require('@modules/web-app/website-scraper');
+const { createWebApp } = require('@modules/web-app/web-app-creator');
 
 /**
  * 计算目录大小（字节）
@@ -132,7 +134,7 @@ async function handleAppExportTask(task) {
                 version: version,
                 exportPath: savePath
             }
-        });
+        }, () => {});
 
         return { success: true };
     } catch (error) {
@@ -151,7 +153,7 @@ async function handleAppExportTask(task) {
                 appId: uid,
                 error: error.message
             }
-        });
+        }, () => {});
 
         throw error;
     }
@@ -420,7 +422,7 @@ class AppManagerIpcHandler {
                         // hasData: 删除前是否存在应用数据
                         hasData: hasData
                     }
-                });
+                }, () => {});
 
                 logger.info(`应用已删除: ${id}, devTag: ${devTag}`);
                 return { success: true };
@@ -475,7 +477,7 @@ class AppManagerIpcHandler {
                         // clearedSizeStr: 清理的数据大小（格式化字符串）
                         clearedSizeStr: clearedSize > 0 ? formatSize(clearedSize) : '0 B'
                     }
-                });
+                }, () => {});
 
                 return { success: true };
             } catch (error) {
@@ -570,6 +572,69 @@ class AppManagerIpcHandler {
                 logger.error('添加开发应用失败:', error);
                 return { correct: {}, wrong: { error: error.message } };
             }
+        });
+        // 抓取网站信息
+        this.handlers.set('fetch-website-info', async (event, url) => {
+            try {
+                if (!url) {
+                    return { success: false, error: 'URL is required' };
+                }
+                const info = await fetchWebsiteInfo(url);
+                let iconPath = '';
+                if (info.faviconUrl) {
+                    const tmpDir = path.join(getAppPath(), 'tmp-webapp-icon');
+                    if (!fs.existsSync(tmpDir)) {
+                        fs.mkdirSync(tmpDir, { recursive: true });
+                    }
+                    const iconTmpPath = path.join(tmpDir, 'favicon-' + Date.now() + '.png');
+                    const downloadResult = await downloadIcon(info.faviconUrl, iconTmpPath);
+                    if (downloadResult.success) {
+                        iconPath = downloadResult.path;
+                    }
+                }
+                return {
+                    success: true,
+                    data: {
+                        title: info.title,
+                        url: info.url,
+                        iconPath: iconPath
+                    }
+                };
+            } catch (error) {
+                logger.error('fetch-website-info failed: {}', error.message);
+                return { success: false, error: error.message };
+            }
+        });
+
+        // 创建网页应用
+        this.handlers.set('create-web-app', async (event, options) => {
+            try {
+                const result = await createWebApp(options);
+                if (result.success) {
+                    canboxDb.put({
+                        type: 'success',
+                        message: 'operationHistory.messages.webAppCreated',
+                        params: { appName: options.name },
+                        module: 'app',
+                        details: {
+                            appId: result.uid,
+                            url: options.url
+                        }
+                    }, () => {});
+                }
+                return result;
+            } catch (error) {
+                logger.error('create-web-app failed: {}', error.message);
+                return { success: false, error: error.message };
+            }
+        });
+
+        this.handlers.set('get-default-icon-path', async () => {
+            const defaultIconPath = path.join(__dirname, '..', 'web-app', 'default-icon.png');
+            if (fs.existsSync(defaultIconPath)) {
+                return { success: true, path: defaultIconPath };
+            }
+            return { success: false };
         });
     }
 

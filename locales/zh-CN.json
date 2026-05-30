@@ -461,7 +461,33 @@
             "appDownloadSuccess": "应用 \"{appName}\" 下载成功：v{version}",
             "appInstallSuccess": "应用 \"{appName}\" 安装成功",
             "appExportSuccess": "应用 \"{appName}\" 导出成功：v{version}",
-            "appExportFailed": "应用 \"{appName}\" 导出失败"
+            "appExportFailed": "应用 \"{appName}\" 导出失败",
+            "webAppCreated": "网页应用 \"{appName}\" 创建成功"
         }
+    },
+    "webApp": {
+        "createBtn": "创建网页应用",
+        "createTitle": "创建网页应用",
+        "createDesc": "将任意网页封装为独立桌面应用，像使用本地软件一样打开网站。输入网址后点击获取，可自动抓取网站名称和图标；也可以手动填写各项信息。创建完成后，应用会出现在应用列表中，支持生成系统快捷方式。",
+        "url": "网址",
+        "urlPlaceholder": "请输入网址，例如 https://example.com",
+        "urlRequired": "请输入网址",
+        "urlInvalid": "请输入有效的网址",
+        "appName": "应用名称",
+        "appNamePlaceholder": "请输入应用名称",
+        "appNameRequired": "请输入应用名称",
+        "alias": "英文别名",
+        "aliasPlaceholder": "用于快捷方式搜索，如 yiyan",
+        "aliasHint": "快捷方式将显示为 canbox-应用名 (别名)，便于快速启动工具搜索",
+        "icon": "图标",
+        "uploadIcon": "上传自定义图标",
+        "selectIcon": "选择图标",
+        "navigationBar": "导航栏",
+        "navigationBarHint": "开启后显示前进/后退/刷新导航栏",
+        "fetch": "获取",
+        "fetchFailed": "获取网站信息失败：",
+        "create": "创建",
+        "createSuccess": "网页应用创建成功！",
+        "createFailed": "创建网页应用失败："
     }
 }
