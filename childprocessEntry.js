@@ -172,8 +172,9 @@ function createAppWindow() {
             ? JSON.parse(fs.readFileSync(uatDevJsonPath, 'utf-8'))
             : null;
 
-        // 创建会话
-        const sess = session.fromPartition(appId);
+        // 创建会话（WebApp 使用持久化 session 以保持登录状态）
+        const partition = appJson.type === 'webapp' ? 'persist:' + appId : appId;
+        const sess = session.fromPartition(partition);
         sess.registerPreloadScript({
             type: 'frame',
             filePath: path.join(__dirname, 'modules/app.api.js')

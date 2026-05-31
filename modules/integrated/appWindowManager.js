@@ -56,8 +56,9 @@ class AppWindowManager {
                 ? JSON.parse(fs.readFileSync(path.resolve(appPath, 'uat.dev.json'), 'utf-8'))
                 : null;
 
-            // 创建会话
-            const sess = session.fromPartition(uid);
+            // 创建会话（WebApp 使用持久化 session 以保持登录状态）
+            const partition = appJson.type === 'webapp' ? 'persist:' + uid : uid;
+            const sess = session.fromPartition(partition);
             logger.debug('__dirname: {}', __dirname);
             sess.registerPreloadScript({
                 type: 'frame',
