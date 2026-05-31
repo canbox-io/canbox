@@ -143,6 +143,7 @@ WebApp is a special type of APP that wraps a webpage as a standalone desktop app
 | webappOptions | | object | * | WebApp-specific options, only valid when `type` is `"webapp"` |
 | webappOptions.showNavbar | webappOptions | boolean | * | Whether to show the navigation bar (back/forward/refresh). Default: `false` |
 | window | | object | 1 | Same as BrowserWindow parameters in Electron |
+| window.zoomEnabled | window | boolean | * | Enable zoom (Ctrl+Wheel / Ctrl++/-/0). Step: 0.1, range: 0.5~2.0, Ctrl+0 resets to 1.0. Default: `true` |
 | platform | | array | * | windows, darwin, linux<br>Platforms supported by plugin apps, this is `optional`, **currently defaults to full platform support** |
 | categories | | array | * | App category, at most the first two are taken |
 | tags | | array | * | App tags, used for category display |

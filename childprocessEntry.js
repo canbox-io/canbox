@@ -297,6 +297,13 @@ function createAppWindow() {
             setupWebAppNavigation(appWin);
         }
 
+        // 窗口缩放（Ctrl+滚轮 / Ctrl++/-/0），默认启用，支持持久化
+        const { setupAppZoom, startZoomPersistence } = require('@modules/web-app/app-zoom');
+        const enableZoom = appJson.window?.zoomEnabled !== false;
+        const savedZoom = state?.zoomFactor || 1.0;
+        setupAppZoom(appWin, enableZoom, savedZoom);
+        const zoomPersistence = enableZoom ? startZoomPersistence(appWin, appId, winState, savedZoom) : null;
+
         // 错误处理
         appWin.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
             logger.error(`[${appId}] Failed to load: ${errorCode} - ${errorDescription}`);
@@ -341,6 +348,9 @@ function createAppWindow() {
 
         // 窗口关闭时保存状态
         appWin.on('close', () => {
+            // 停止 zoom 持久化轮询
+            if (zoomPersistence) zoomPersistence.stop();
+
             // 通知渲染进程
             if (appWin.webContents) {
                 appWin.webContents.send('window-close-callback');
@@ -349,9 +359,11 @@ function createAppWindow() {
             // 保存窗口状态
             const bounds = appWin.getBounds();
             const isMax = appWin.isMaximized();
+            const lastZoom = zoomPersistence?.getLastKnownZoom() || savedZoom;
             winState.save(appId, {
                 restore: 1,
                 isMax,
+                zoomFactor: lastZoom,
                 position: isMax ? state?.position : bounds
             }, () => {
                 logger.info(`[${appId}] Window state saved`);

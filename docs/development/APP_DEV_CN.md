@@ -143,6 +143,7 @@ WebApp 是一种特殊类型的 APP，将网页封装为独立桌面应用。`ma
 | webappOptions | | object |  *  | WebApp 专属选项，仅当 `type` 为 `"webapp"` 时有效 |
 | webappOptions.showNavbar | webappOptions | boolean |  *  | 是否显示导航栏（前进/后退/刷新）。默认：`false` |
 | window | | object |  1  | 同 Electron 中 BrowserWindow 参数                                                                                                                       |
+| window.zoomEnabled | window | boolean |  *  | 是否启用缩放（Ctrl+滚轮/Ctrl++/-/0）。步进 0.1，范围 0.5~2.0，Ctrl+0 重置到 1.0。默认：`true` |
 | platform | | array |  *  | windows, darwin, linux<br />插件应用支持的平台，此为 `可选项`，**当前是默认为全平台支持**                                                       |
 | categories | | array |  *  | app分类，最多只取前两个                                                                                                                                 |
 | tags | | array |  *  | app标签，用于分类展示                                                                                                                                   |
