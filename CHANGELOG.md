@@ -5,6 +5,40 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.5] - 2026-05-31
+
+### feat | 新功能 / Features
+
+添加窗口缩放功能（Ctrl+滚轮/Ctrl++/-/0），缩放范围 0.5~2.0
+支持缩放因子持久化存储，重启 APP 自动恢复
+
+Add window zoom feature (Ctrl+Wheel / Ctrl++/-/0), range 0.5~2.0
+Support zoom factor persistence, auto-restore on APP restart
+
+### fix | 问题修复 / Bug Fixes
+
+为 WebApp 使用持久化会话以保持登录状态
+
+Use persistent session for WebApp to maintain login state
+
+### docs | 文档 / Documentation
+
+添加 APP 窗口缩放功能设计文档，完成变更归档
+
+Add APP window zoom design documentation and complete change archive
+
+### style | 样式 / Styling
+
+调整主操作按钮布局并移除废弃配置
+
+Adjust main action button layout and remove deprecated config
+
+### chore | 维护 / Maintenance
+
+升级版本至 0.5.5
+
+Bump version to 0.5.5
+
 ## [0.5.4] - 2026-05-31
 
 ### fix | 问题修复 / Bug Fixes
