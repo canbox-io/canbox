@@ -5,6 +5,26 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.4] - 2026-05-31
+
+### fix | 问题修复 / Bug Fixes
+
+修复 Windows 下导入 APP 时 .asar 文件句柄被锁定导致 EBUSY 错误，改用 asar.extractFile 读取包内文件
+
+Fix EBUSY error when importing APP on Windows by using asar.extractFile instead of fs.readFileSync to avoid file handle locking
+
+### refactor | 重构 / Refactoring
+
+将 setupExternalUrlHandler 导出到 winFactory 对象，修复 APP 启动时 is not a function 错误
+
+Export setupExternalUrlHandler from winFactory to fix "is not a function" error on APP launch
+
+### docs | 文档 / Documentation
+
+APP 开发文档补充 WebApp 类型及链接行为说明
+
+Add WebApp type and link behavior documentation to APP development guide
+
 ## [0.5.3] - 2026-05-30
 
 ### feat | 新功能 / Features
