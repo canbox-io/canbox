@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const originalFs = require('original-fs'); // 使用 original-fs 来操作 asar 文件
+const originalFs = require('original-fs');
+const asar = require('asar');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
@@ -290,11 +291,10 @@ async function importAppFromZip(task, zipPath, uid) {
         taskManager.updateProgress(task.id, 60, '文件处理完成，读取配置...', 0);
 
         // 从临时目录的 asar 文件中读取 app.json
-        // 注意：必须使用 fs（Electron 修补版）而不是 originalFs（原始版不支持 asar）
+        // 使用 asar.extractFile 读取，避免 Electron 修补的 fs 在 Windows 上锁定 .asar 文件句柄
         const asarInTemp = path.join(task.tempPath, `${uid}.asar`);
-        const appJsonPath = path.join(asarInTemp, 'app.json');
-        logger.info('从临时目录读取 app.json: {}', appJsonPath);
-        const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
+        logger.info('从临时目录读取 app.json: {}', asarInTemp);
+        const appJsonContent = asar.extractFile(asarInTemp, 'app.json').toString('utf8');
         const appJson = JSON.parse(appJsonContent);
         logger.info('app.json 读取成功: {}', JSON.stringify(appJson));
 
