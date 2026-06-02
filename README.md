@@ -51,6 +51,8 @@ The following features are planned for future development. For detailed informat
 
 ![MyApps](./public/screenshot/MyApps.png)
 
+![MyApps-CreateWebApp](./public/screenshot/MyApps-CreateWebApp.png)
+
 ### Import Existing Apps
 
 Canbox supports importing application packages packaged by developers (ZIP format).
@@ -216,7 +218,9 @@ For detailed development guides, please refer to:
 
 ## Settings
 
-![screenshot-settings](./public/screenshot/screenshot-settings.png)
+![Settings](./public/screenshot/Settings.png)
+
+![Settings2](./public/screenshot/Settings2.png)
 
 Canbox provides rich settings options to help you personalize the application configuration.
 
