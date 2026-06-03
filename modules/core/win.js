@@ -1,6 +1,7 @@
 const { BrowserWindow, Notification, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const logger = require('@modules/utils/logger');
 
 // 初始化 pathManager 模块
@@ -33,14 +34,95 @@ function isSameRootDomain(urlStr1, urlStr2) {
     }
 }
 
-function setupExternalUrlHandler(win, isWebApp = false) {
+/**
+ * 为 WebApp 创建无菜单栏的子窗口
+ * 用于处理同根域名下 window.open() 打开的页面
+ */
+function createChildWebAppWindow(parentWin, url, appJson, appPath, sess, uid) {
+    const config = {
+        width: appJson?.window?.width || 1280,
+        height: appJson?.window?.height || 800,
+        resizable: true,
+        show: true,
+        webPreferences: {
+            sandbox: false,
+            noSandbox: true,
+            spellcheck: false,
+            webSecurity: false,
+            nodeIntegration: false,
+            nodeIntegrationInSubFrames: true,
+            contextIsolation: true,
+            session: sess
+        }
+    };
+
+    if (appJson?.window?.minWidth) config.minWidth = appJson.window.minWidth;
+    if (appJson?.window?.minHeight) config.minHeight = appJson.window.minHeight;
+
+    // 设置图标
+    if (appJson?.logo && appPath) {
+        if (appJson.window?.icon) {
+            config.icon = path.resolve(appPath, appJson.window.icon);
+        } else {
+            const logoExt = path.extname(appJson.logo);
+            const iconExt = os.platform() === 'win32' ? '.ico' : logoExt;
+            config.icon = path.resolve(getAppPath(), `${uid}${iconExt}`);
+        }
+    }
+
+    // 设置 app 自定义 preload
+    if (appJson?.window?.webPreferences?.preload) {
+        config.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
+    }
+
+    // Linux 系统特殊处理
+    if (os.platform() === 'linux') {
+        config.windowClass = `canbox-app-${uid}`;
+        config.title = appJson?.name || uid;
+        config.titleBarStyle = 'default';
+    }
+
+    const childWin = new BrowserWindow(config);
+    childWin.setMenu(null);
+
+    // 注册子窗口到 windowManager，父窗口关闭时自动清理
+    windowManager.addWindow(childWin.id, childWin);
+    windowManager.addRelation(uid, childWin.id);
+
+    childWin.on('close', () => {
+        windowManager.removeChildRelation(uid, childWin.id);
+        windowManager.removeWindow(childWin.id);
+    });
+
+    // 为新窗口也设置导航处理（递归）
+    setupExternalUrlHandler(childWin, true, appJson, appPath, sess, uid);
+
+    // WebApp 导航增强（快捷键、右键菜单）
+    if (appJson?.type === 'webapp') {
+        const { setupWebAppNavigation } = require('@modules/web-app/web-app-navigator');
+        setupWebAppNavigation(childWin);
+    }
+
+    childWin.loadURL(url).catch(err => {
+        logger.error('[{}] Child window failed to load URL: {}', uid, err);
+        if (childWin && !childWin.isDestroyed()) {
+            childWin.close();
+        }
+    });
+
+    logger.info('[{}] Child WebApp window created for: {}', uid, url);
+}
+
+function setupExternalUrlHandler(win, isWebApp = false, appJson = null, appPath = null, sess = null, uid = null) {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
             if (isWebApp) {
                 try {
                     const currentUrl = win.webContents.getURL();
                     if (isSameRootDomain(url, currentUrl)) {
-                        return { action: 'allow' };
+                        // 手动创建无菜单栏的子窗口
+                        createChildWebAppWindow(win, url, appJson, appPath, sess, uid);
+                        return { action: 'deny' };
                     }
                 } catch (e) { /* fallthrough */ }
             }

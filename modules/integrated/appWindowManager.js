@@ -171,6 +171,11 @@ class AppWindowManager {
             // 加载应用内容
             appWin.loadURL(loadUrl).catch(err => {
                 logger.error('[{}] Failed to load URL: {}', uid, err);
+                // ERR_ABORTED (-3) 通常是页面内导航（跳转同根域名）触发的正常中断，不应关闭窗口
+                if (err?.errno === -3 || (err?.message && err.message.includes('ERR_ABORTED'))) {
+                    logger.info('[{}] Load aborted (likely page navigation), keeping window open', uid);
+                    return;
+                }
                 if (appWin) appWin.close();
             });
 
@@ -182,7 +187,7 @@ class AppWindowManager {
 
             // 设置外部链接处理（WebApp 模式下同源链接在窗口内打开）
             const { setupExternalUrlHandler } = require('@modules/core/win');
-            setupExternalUrlHandler(appWin, appJson.type === 'webapp');
+            setupExternalUrlHandler(appWin, appJson.type === 'webapp', appJson, appPath, sess, uid);
 
             // WebApp 导航增强
             if (appJson.type === 'webapp') {

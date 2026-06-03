@@ -377,6 +377,11 @@ function createAppWindow() {
         // 加载应用内容
         appWin.loadURL(loadUrl).catch(err => {
             logger.error(`[${appId}] Failed to load URL: ${err}`);
+            // ERR_ABORTED (-3) 通常是页面内导航（跳转同根域名）触发的正常中断，不应关闭窗口
+            if (err?.errno === -3 || (err?.message && err.message.includes('ERR_ABORTED'))) {
+                logger.info(`[${appId}] Load aborted (likely page navigation), keeping window open`);
+                return;
+            }
             if (appWin) appWin.close();
         });
 
