@@ -134,14 +134,86 @@ function isSameRootDomain(urlStr1, urlStr2) {
     }
 }
 
-function setupExternalUrlHandler(win, isWebApp = false) {
+/**
+ * 为 WebApp 创建无菜单栏的子窗口
+ * 用于处理同根域名下 window.open() 打开的页面
+ */
+function createChildWebAppWindow(parentWin, url, appJson, appPath, sess) {
+    const config = {
+        width: appJson?.window?.width || 1280,
+        height: appJson?.window?.height || 800,
+        resizable: true,
+        show: true,
+        webPreferences: {
+            sandbox: false,
+            noSandbox: true,
+            spellcheck: false,
+            webSecurity: false,
+            nodeIntegration: false,
+            nodeIntegrationInSubFrames: true,
+            contextIsolation: true,
+            session: sess
+        }
+    };
+
+    if (appJson?.window?.minWidth) config.minWidth = appJson.window.minWidth;
+    if (appJson?.window?.minHeight) config.minHeight = appJson.window.minHeight;
+
+    // 设置图标
+    if (appJson?.logo && appPath) {
+        if (appJson.window?.icon) {
+            config.icon = path.resolve(appPath, appJson.window.icon);
+        } else {
+            const logoExt = path.extname(appJson.logo);
+            const iconExt = os.platform() === 'win32' ? '.ico' : logoExt;
+            config.icon = path.resolve(appPath, `${appId}${iconExt}`);
+        }
+    }
+
+    // 设置 app 自定义 preload
+    if (appJson?.window?.webPreferences?.preload) {
+        config.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
+    }
+
+    // Linux 系统特殊处理
+    if (os.platform() === 'linux') {
+        config.windowClass = `canbox-app-${appId}`;
+        config.title = appJson?.name || appId;
+        config.titleBarStyle = 'default';
+    }
+
+    const childWin = new BrowserWindow(config);
+    childWin.setMenu(null);
+
+    // 为新窗口也设置导航处理（递归）
+    setupExternalUrlHandler(childWin, true, appJson, appPath, sess);
+
+    // WebApp 导航增强（快捷键、右键菜单）
+    if (appJson?.type === 'webapp') {
+        const { setupWebAppNavigation } = require('@modules/web-app/web-app-navigator');
+        setupWebAppNavigation(childWin);
+    }
+
+    childWin.loadURL(url).catch(err => {
+        logger.error(`[${appId}] Child window failed to load URL: ${err}`);
+        if (childWin && !childWin.isDestroyed()) {
+            childWin.close();
+        }
+    });
+
+    logger.info(`[${appId}] Child WebApp window created for: ${url}`);
+}
+
+function setupExternalUrlHandler(win, isWebApp = false, appJson = null, appPath = null, sess = null) {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
             if (isWebApp) {
                 try {
                     const currentUrl = win.webContents.getURL();
                     if (isSameRootDomain(url, currentUrl)) {
-                        return { action: 'allow' };
+                        // 手动创建无菜单栏的子窗口，避免 Electron 默认窗口带有菜单栏
+                        createChildWebAppWindow(win, url, appJson, appPath, sess);
+                        return { action: 'deny' };
                     }
                 } catch (e) { /* fallthrough */ }
             }
@@ -313,7 +385,7 @@ function createAppWindow() {
             appWin.setAppDetails({ appId: appId });
         }
 
-        setupExternalUrlHandler(appWin, appJson.type === 'webapp');
+        setupExternalUrlHandler(appWin, appJson.type === 'webapp', appJson, appPath, sess);
 
         // WebApp 导航增强
         if (appJson.type === 'webapp') {
