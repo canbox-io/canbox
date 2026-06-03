@@ -13,15 +13,33 @@ const { getAppsDevStore, getAppsStore } = require('@modules/main/storageManager'
 // 初始化 windowManager 实例（现在集成到 appWindowManager）
 const windowManager = require('@modules/integrated/appWindowManager');
 
+/**
+ * 获取根域名（hostname 的最后两段）
+ * 用于判断同域名不同子域名的导航（如 www.douyin.com → live.douyin.com）
+ */
+function getRootDomain(hostname) {
+    const parts = hostname.split('.');
+    if (parts.length <= 2) return hostname;
+    return parts.slice(-2).join('.');
+}
+
+function isSameRootDomain(urlStr1, urlStr2) {
+    try {
+        const h1 = new URL(urlStr1).hostname;
+        const h2 = new URL(urlStr2).hostname;
+        return getRootDomain(h1) === getRootDomain(h2);
+    } catch (e) {
+        return false;
+    }
+}
+
 function setupExternalUrlHandler(win, isWebApp = false) {
     win.webContents.setWindowOpenHandler(({ url }) => {
         if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
             if (isWebApp) {
                 try {
                     const currentUrl = win.webContents.getURL();
-                    const navOrigin = new URL(url).origin;
-                    const currentOrigin = new URL(currentUrl).origin;
-                    if (navOrigin === currentOrigin) {
+                    if (isSameRootDomain(url, currentUrl)) {
                         return { action: 'allow' };
                     }
                 } catch (e) { /* fallthrough */ }
@@ -35,10 +53,16 @@ function setupExternalUrlHandler(win, isWebApp = false) {
         if (url.startsWith('http://') || url.startsWith('https://')) {
             try {
                 const currentUrl = win.webContents.getURL();
-                const navOrigin = new URL(url).origin;
-                const currentOrigin = new URL(currentUrl).origin;
-                if (navOrigin === currentOrigin) {
-                    return;
+                if (isWebApp) {
+                    if (isSameRootDomain(url, currentUrl)) {
+                        return;
+                    }
+                } else {
+                    const navOrigin = new URL(url).origin;
+                    const currentOrigin = new URL(currentUrl).origin;
+                    if (navOrigin === currentOrigin) {
+                        return;
+                    }
                 }
             } catch (e) {
                 return;
