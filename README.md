@@ -31,19 +31,17 @@ Canbox is an open project, and every contribution helps make it better!
 
 ---
 
-## 🗺️ Planned Features
-
-The following features are planned for future development. For detailed information, please see [Feature Roadmap](./docs/FEATURE_ROADMAP.md).
-
----
-
 # Features
 
 - **App Management**: Supports installation, uninstallation, and updates of applications.
 - **Shortcuts**: Create shortcuts for frequently used applications.
+- **WebApp Creation**: Create desktop web apps from any URL, with automatic site info scraping, navigation controls, and alias support.
 - **Multi-platform Support**: Based on Electron, supports Linux, Windows (not fully tested), and macOS (I don't have a Mac 😢, waiting for someone with a Mac to do this 😆)
-- **App Import**: Supports importing offline application packages, suitable for scenarios where apps cannot be publicly shared.
-- **Log Viewer**: Built-in log viewer with real-time log monitoring, filtering, search, and export capabilities.
+- **App Import & Export**: Supports importing offline application packages and exporting installed apps for sharing.
+- **Auto Update**: Automatic update checking with GitHub and Gitee dual sources, configurable check frequency.
+- **Customization**: Configurable language, font, data path, and window zoom (0.5x ~ 2.0x).
+- **Log Viewer**: Built-in log viewer with real-time monitoring, filtering, search, and export capabilities.
+- **File Task Management**: Unified management for download, import, export, and other file operations.
 
 # Canbox Usage
 
@@ -264,6 +262,8 @@ Access the log viewer from the system tray menu or use keyboard shortcuts. Featu
 - **Multiple Sources**: Switch between application logs and monitor logs
 - **Always on Top**: Keep the log viewer window on top
 
+![LogViewer.png](./public/screenshot/LogViewer.png)
+
 ### Shortcuts
 
 Canbox supports creating shortcuts for frequently used applications:
@@ -298,14 +298,6 @@ Canbox provides the following formats for download and installation:
 Please visit the project's GitHub Releases page to download the latest version of Canbox.
 
 # Issues Welcome!
-
-# Development Documentation
-
-[Canbox Development Documentation](./docs/development/CANBOX_DEV.md)
-
-[App Development Documentation](./docs/development/APP_DEV.md)
-
-[API Documentation](./docs/development/API.md)
 
 # License
 
