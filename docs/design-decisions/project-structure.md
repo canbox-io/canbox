@@ -1,20 +1,21 @@
 # Canbox 多项目管理方案分析
 
-> **状态：** 调研阶段
-> **日期：** 2026-06-03
+> **状态：** 已实施
+> **日期：** 2026-06-06
 > **作者：** Canbox Team
 
 ## 1. 背景
 
 随着 Canbox 项目的发展，需要管理多个相关但独立的项目：
 
-| 项目 | 说明 |
-|------|------|
-| **canbox** | Canbox 主程序（Electron 桌面应用） |
-| **canbox-pages** | Canbox 官网/文档站（计划） |
-| **canbox-vscode-extension** | VSCode/VSCodium 扩展（计划） |
+| 项目 | 说明 | 状态 |
+|------|------|------|
+| **canbox** | Canbox 主程序（Electron 桌面应用） | 活跃开发 |
+| **canbox-pages** | Canbox 官网与文档站 | 活跃开发 |
 
 当前每个项目有独立的 git 仓库。随着项目数量增加，需要一套合理的多项目管理办法。
+
+未来可能新增 canbox-vscode-extension 等项目，本方案的架构设计已预留扩展空间。
 
 ---
 
@@ -59,23 +60,21 @@ VSCode 的原生功能，允许在**一个 VSCode 窗口中同时打开多个项
 
 #### 2.2 配置方式
 
-创建 `canbox.code-workspace` 文件：
+创建 `canbox.code-workspace` 文件（已实施，位于 canbox 项目根目录）：
 
 ```json
 {
   "folders": [
-    { "name": "canbox",       "path": "./canbox" },
-    { "name": "canbox-pages",  "path": "./canbox-pages" },
-    { "name": "vscode-ext",    "path": "./canbox-vscode-extension" }
+    { "name": "canbox",       "path": "." },
+    { "name": "canbox-pages",  "path": "../canbox-pages" }
   ],
-  "settings": {
-    "files.exclude": { "**/.git": true },
-    "search.exclude": { "**/node_modules": true }
-  }
+  "settings": {}
 }
 ```
 
-双击该文件，VSCode 会在一个窗口里打开三个项目。
+> **注意：** 当未来新增项目（如 canbox-vscode-extension）时，只需在 `folders` 数组中添加一项即可，无需其他改动。
+
+用 VSCode 打开该文件即可在一个窗口里管理所有项目。
 
 #### 2.3 优点
 
@@ -106,6 +105,44 @@ VSCode 的原生功能，允许在**一个 VSCode 窗口中同时打开多个项
 
 **缓解方案：** 需要时单独打开某个项目文件夹，让 AI 工具获得清晰上下文。
 
+#### 2.6 日常使用方式
+
+**workspace 是日常开发的唯一入口，不需要来回切换。**
+
+```
+日常开发（99% 的时间）        AI 需要精确上下文时（偶尔）
+┌─────────────────────┐      ┌─────────────────────┐
+│ 双击 canbox.code-   │      │ 单独用 VSCode 打开   │
+│ workspace           │      │ canbox/ 文件夹       │
+│                     │      │                     │
+│ 一个窗口，两个项目   │      │ 给 AI 工具清晰上下文 │
+│ 终端下拉切换目录     │      │                     │
+│ Ctrl+Shift+F 跨项目 │      │ 完成后切回 workspace │
+└─────────────────────┘      └─────────────────────┘
+```
+
+你**不需要**一会打开 `canbox/` 文件夹、一会又切到 workspace。workspace 就是日常开发的唯一入口。
+
+#### 2.7 AI 数据目录
+
+`.codebuddy` / `.trae` 等 AI 工具的本地数据目录**保持在各项目根目录下，不需要变更**：
+
+```
+~/projects/
+├── canbox/
+│   ├── .codebuddy/              ← canbox 项目的 AI 数据，不变
+│   ├── .trae/                   ← 同上
+│   ├── canbox.code-workspace
+│   └── ...
+└── canbox-pages/
+    ├── .codebuddy/              ← canbox-pages 自己的 AI 数据（自动生成）
+    └── ...
+```
+
+- AI 工具的数据目录是**按项目文件夹**管理的，不是按 `.code-workspace` 文件
+- 用 workspace 打开时，AI 工具在自己的项目目录下读写数据，和现在完全一样
+- 两个项目的 AI 数据**互不干扰**
+
 ---
 
 ### 方案3：路标文件（Project Roadmap）
@@ -114,25 +151,35 @@ VSCode 的原生功能，允许在**一个 VSCode 窗口中同时打开多个项
 
 #### 3.1 实现方式
 
-**方式 A：纯声明式路标文件**
+**方式 A：纯声明式路标文件（已实施 → `roadmap.json`）**
 
 ```json
-// canbox/roadmap.json
 {
   "projects": [
-    { "name": "canbox",    "path": ".",           "repo": "..." },
-    { "name": "pages",     "path": "../canbox-pages", "repo": "..." },
-    { "name": "vscode-ext", "path": "../canbox-vscode-extension", "repo": "..." }
+    {
+      "name": "canbox",
+      "description": "Canbox 主程序 —— 基于 Electron 的桌面应用集合",
+      "path": ".",
+      "type": "electron-app"
+    },
+    {
+      "name": "canbox-pages",
+      "description": "Canbox 官网与文档站",
+      "path": "../canbox-pages",
+      "type": "website"
+    }
   ]
 }
 ```
 
-**方式 B：package.json workspaces**
+> 未来新增项目时，在 `projects` 数组中追加即可。
+
+**方式 B：package.json workspaces**（待评估）
 
 ```json
-// canbox/package.json
+// canbox/package.json（示例，未启用）
 {
-  "workspaces": ["../canbox-pages", "../canbox-vscode-extension"]
+  "workspaces": ["../canbox-pages"]
 }
 ```
 
@@ -149,47 +196,53 @@ VSCode 的原生功能，允许在**一个 VSCode 窗口中同时打开多个项
 
 ---
 
-## 3. 推荐方案
+## 3. 推荐方案（已实施）
 
 ### 3.1 组合方案：方案2 + 方案3
 
 ```
-~/projects/
+~/projects/                       # 实际路径：/depot/cargo/
 ├── canbox/                        # 主项目 repo
+│   ├── .codebuddy/                # AI 数据（不动）
 │   ├── docs/
 │   ├── modules/
-│   ├── roadmap.json               # 方案3：声明项目关系
-│   └── canbox.code-workspace      # 方案2：VSCode 工作区配置
-├── canbox-pages/                  # 独立 repo
-└── canbox-vscode-extension/       # 独立 repo
+│   ├── src/
+│   ├── canbox.code-workspace      # ✅ 已创建 —— 日常开发入口
+│   └── roadmap.json               # ✅ 已创建 —— 项目架构声明
+└── canbox-pages/                  # 独立 repo
+    ├── .codebuddy/                # 自动生成
+    └── ...
 ```
 
 ### 3.2 收益
 
 | 需求 | 满足方式 |
 |------|---------|
-| 不想重建 git | ✅ 三个独立 repo |
-| 统一开发体验 | ✅ 用 `.code-workspace` 统一打开 |
+| 不想重建 git | ✅ 独立 repo，互不影响 |
+| 统一开发体验 | ✅ 用 `.code-workspace` 作为日常唯一入口 |
+| 不需要切换目录 | ✅ 双击 workspace 一个窗口搞定所有项目 |
+| AI 数据目录不变 | ✅ `.codebuddy` 保持在各项目根目录 |
 | AI 工具上下文清晰 | ✅ 需要时单独打开项目文件夹 |
 | 跨项目搜索 | ✅ Multi-Root Workspace 支持 |
 | 新成员理解架构 | ✅ `roadmap.json` 声明项目关系 |
+| 未来扩展 | ✅ 新增项目只需在 workspace 和 roadmap 各加一项 |
 
 ### 3.3 实施步骤
 
-1. **保持三个独立 repo**（不需要重建 git）
-2. **创建 `canbox.code-workspace`**（方案2，提升开发体验）
-3. **在主项目添加 `roadmap.json`**（方案3，声明项目架构）
-4. **更新 `docs/` 文档**，反映新的项目组织结构
+1. ✅ **保持独立 repo**（不需要重建 git）
+2. ✅ **创建 `canbox.code-workspace`**（日常开发入口）
+3. ✅ **创建 `roadmap.json`**（声明项目架构）
+4. ✅ **更新本文档**（反映实施结果）
 
 ---
 
 ## 4. 后续行动
 
-- [ ] 创建 `canbox.code-workspace` 文件
-- [ ] 创建 `roadmap.json` 声明项目架构
-- [ ] 更新 `docs/` 下的相关文档
+- [x] 创建 `canbox.code-workspace` 文件
+- [x] 创建 `roadmap.json` 声明项目架构
+- [x] 更新 `docs/` 下的相关文档
 - [ ] 评估 `package.json` workspaces 是否适用
 
 ---
 
-*最后更新：2026-06-03*
+*最后更新：2026-06-06*

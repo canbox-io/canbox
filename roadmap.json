@@ -1,0 +1,16 @@
+{
+  "projects": [
+    {
+      "name": "canbox",
+      "description": "Canbox 主程序 —— 基于 Electron 的桌面应用集合",
+      "path": ".",
+      "type": "electron-app"
+    },
+    {
+      "name": "canbox-pages",
+      "description": "Canbox 官网与文档站",
+      "path": "../canbox-pages",
+      "type": "website"
+    }
+  ]
+}
