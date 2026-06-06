@@ -73,6 +73,8 @@
         "executionModeChildprocess": "Child Process Mode",
         "executionModeCustom": "Custom Mode",
         "executionModeSetSuccess": "App startup mode saved",
+        "autostart": "Autostart on Boot",
+        "autostartSaved": "Autostart setting saved",
         "shortcutTitle": "For all App",
         "createShortcut": "Create Shortcut",
         "deleteShortcut": "Delete Shortcut",

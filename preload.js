@@ -259,6 +259,10 @@ contextBridge.exposeInMainWorld(
             getLast: () => ipcRenderer.invoke('menu-get-last'),
             setLast: (menuName) => ipcRenderer.invoke('menu-set-last', menuName)
         },
+        autostart: {
+            get: () => ipcRenderer.invoke('autostart:get'),
+            set: (enabled) => ipcRenderer.invoke('autostart:set', enabled)
+        },
         canboxConfig: {
             get: (key, defaultValue) => ipcRenderer.invoke('canboxConfig-get', key, defaultValue),
             set: (key, value) => ipcRenderer.invoke('canboxConfig-set', key, value)

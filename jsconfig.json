@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
+        "ignoreDeprecations": "6.0",
         "paths": {
             "@/*": ["./src/*"],
             "@modules/*": ["./modules/*"]
@@ -10,8 +11,9 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "maxNodeModuleJsDepth": 0,
-        "target": "es6",
+        "target": "ES2022",
         "module": "commonjs",
+        "moduleResolution": "node",
         "forceConsistentCasingInFileNames": true,
         "typeRoots": ["./types", "./node_modules/@types"]
     },

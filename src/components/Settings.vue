@@ -7,6 +7,17 @@
                 <span>{{ $t('settings.basicGroup') || '基本设置' }}</span>
             </div>
 
+            <!-- 开机自动启动 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">🚀</span>
+                    {{ $t('settings.autostart') }}
+                </label>
+                <div class="setting-control">
+                    <el-switch v-model="autostartEnabled" @change="handleAutostartChange" />
+                </div>
+            </div>
+
             <!-- 语言 -->
             <div class="setting-item">
                 <label class="setting-label">
@@ -301,6 +312,7 @@ const currentDataPath = ref('');
 const diskUsage = ref('');
 const newDataPath = ref('');
 const isSaving = ref(false);
+const autostartEnabled = ref(false);
 
 // 倒计时对话框相关
 const showRestartDialog = ref(false);
@@ -579,6 +591,17 @@ async function handleClearSkipped() {
     }
 }
 
+async function handleAutostartChange(enabled) {
+    const result = await window.api.autostart.set(enabled);
+    if (result.success) {
+        notification.success(t('settings.autostartSaved'));
+    } else {
+        // 失败时回滚
+        autostartEnabled.value = !enabled;
+        notification.error(result.error || t('common.error'));
+    }
+}
+
 async function loadUpdateSource() {
     try {
         const result = await window.api.updateSource.get();
@@ -655,6 +678,12 @@ async function loadSettings() {
 
     await loadUpdateConfig();
     await loadUpdateSource();
+
+    // 加载开机启动状态
+    const autostartResult = await window.api.autostart.get();
+    if (autostartResult.success) {
+        autostartEnabled.value = autostartResult.enabled;
+    }
 }
 
 onMounted(() => {

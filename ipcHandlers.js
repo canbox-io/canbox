@@ -750,6 +750,97 @@ function initIpcHandlers() {
         }
     });
 
+    // ========== 开机自动启动相关 IPC 处理 ==========
+
+    // 获取开机启动状态
+    ipcMain.handle('autostart:get', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            let enabled = canboxStore.get('autostart', false);
+
+            // 验证系统实际状态，确保配置同步
+            let systemEnabled = enabled;
+            if (process.platform === 'linux') {
+                const autostartDir = path.join(os.homedir(), '.config', 'autostart');
+                const desktopFile = path.join(autostartDir, 'canbox.desktop');
+                systemEnabled = fs.existsSync(desktopFile);
+            } else {
+                const settings = app.getLoginItemSettings();
+                systemEnabled = settings.openAtLogin;
+            }
+
+            // 同步状态
+            if (systemEnabled !== enabled) {
+                canboxStore.set('autostart', systemEnabled);
+                enabled = systemEnabled;
+            }
+
+            logger.info('[autostart] get status: {}', enabled);
+            return { success: true, enabled };
+        } catch (error) {
+            logger.error('[autostart] Failed to get status: {}', error);
+            return { success: false, error: error.message, enabled: false };
+        }
+    });
+
+    // 设置开机启动
+    ipcMain.handle('autostart:set', async (event, enabled) => {
+        try {
+            const canboxStore = getCanboxStore();
+
+            if (process.platform === 'linux') {
+                // Linux: 手动管理 ~/.config/autostart/canbox.desktop
+                const autostartDir = path.join(os.homedir(), '.config', 'autostart');
+                const desktopFile = path.join(autostartDir, 'canbox.desktop');
+
+                if (enabled) {
+                    // 创建 autostart 目录
+                    fs.mkdirSync(autostartDir, { recursive: true });
+
+                    // 获取可执行文件路径
+                    let execPath = app.getPath('exe');
+                    if (process.env.APPIMAGE) {
+                        execPath = process.env.APPIMAGE;
+                    }
+
+                    // 写入 .desktop 文件
+                    const desktopContent = `[Desktop Entry]
+Type=Application
+Name=Canbox
+Comment=Some Useful Apps
+Exec=${execPath} --autostart
+Terminal=false
+Hidden=false
+X-GNOME-Autostart-enabled=true
+`;
+                    fs.writeFileSync(desktopFile, desktopContent, 'utf8');
+                    logger.info('[autostart] Created: {}', desktopFile);
+                } else {
+                    // 删除 .desktop 文件
+                    if (fs.existsSync(desktopFile)) {
+                        fs.unlinkSync(desktopFile);
+                        logger.info('[autostart] Removed: {}', desktopFile);
+                    }
+                }
+            } else {
+                // Windows/macOS: 使用 Electron 原生 API
+                app.setLoginItemSettings({
+                    openAtLogin: enabled,
+                    args: enabled ? ['--autostart'] : []
+                });
+                logger.info('[autostart] setLoginItemSettings: openAtLogin={}', enabled);
+            }
+
+            // 保存用户偏好
+            canboxStore.set('autostart', enabled);
+
+            return { success: true };
+        } catch (error) {
+            logger.error('[autostart] Failed to set: {}', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     // ========== Canbox 主程序配置相关 IPC 处理 ==========
     // 获取配置
     ipcMain.handle('canboxConfig-get', (event, key, defaultValue) => {

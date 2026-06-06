@@ -74,6 +74,8 @@
         "executionModeChildprocess": "子进程模式",
         "executionModeCustom": "自定义模式",
         "executionModeSetSuccess": "APP 启动模式已保存",
+        "autostart": "开机自动启动",
+        "autostartSaved": "开机启动设置已保存",
         "shortcutTitle": "为所有 APP",
         "createShortcut": "创建快捷方式",
         "deleteShortcut": "删除快捷方式",

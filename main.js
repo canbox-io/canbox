@@ -58,6 +58,9 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 // 强制退出标志位：用于更新时绕过窗口关闭拦截
 let isForceQuit = false;
 
+// 开机自动启动标志（由 --autostart 参数设置）
+let isAutostart = false;
+
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
 
@@ -253,6 +256,10 @@ if (!getTheLock) {
         }
         if (process.argv.includes('--dev-tag')) {
             isDevTag = true;
+        }
+        if (process.argv.includes('--autostart')) {
+            isAutostart = true;
+            logger.info('[main.js] Autostart mode detected (--autostart)');
         }
 
         if ('' !== appId) {
@@ -470,8 +477,13 @@ const createWindow = () => {
             win.hide();
             win.setSkipTaskbar(true);
             appLoader.loadApp(launchAppId, false, null);
+        } else if (isAutostart) {
+            // 开机自动启动：不显示主窗口，最小化到托盘
+            win.hide();
+            win.setSkipTaskbar(true);
+            logger.info('[main.js] Autostart mode: window hidden to tray');
         } else {
-            win.show(); // 注释掉这行，即启动最小化到tray
+            win.show();
         }
 
         // 检查是否传入了 --dev-tools 参数
