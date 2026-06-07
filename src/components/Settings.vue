@@ -177,6 +177,94 @@
             </div>
         </div>
 
+        <!-- 启动器设置 -->
+        <div class="settings-group">
+            <div class="group-title">
+                <span class="group-icon">🚀</span>
+                <span>{{ $t('launcher.title') }}</span>
+            </div>
+
+            <!-- 启用启动器 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">🔌</span>
+                    {{ $t('launcher.enable') }}
+                </label>
+                <div class="setting-control">
+                    <el-switch v-model="launcherConfig.enabled" @change="handleLauncherEnableChange" />
+                </div>
+            </div>
+
+            <!-- 全局快捷键 -->
+            <div class="setting-item" :class="{ disabled: !launcherConfig.enabled }">
+                <label class="setting-label">
+                    <span class="setting-icon">⌨️</span>
+                    {{ $t('launcher.shortcut') }}
+                </label>
+                <div class="setting-control">
+                    <div class="shortcut-config">
+                        <el-select v-model="launcherConfig.shortcut" @change="handleLauncherShortcutChange"
+                            class="setting-select" :disabled="!launcherConfig.enabled">
+                            <el-option v-for="sc in shortcutOptions" :key="sc.value" :label="sc.label"
+                                :value="sc.value" style="font-size: 16px;" />
+                        </el-select>
+                        <el-input v-if="launcherConfig.shortcut === 'custom'"
+                            v-model="launcherConfig.customShortcut"
+                            :placeholder="$t('launcher.shortcutPlaceholder')"
+                            @blur="handleCustomShortcutBlur"
+                            :class="{ 'shortcut-conflict': shortcutConflict }"
+                            style="width: 200px;"
+                            :disabled="!launcherConfig.enabled" />
+                        <span v-if="shortcutConflict" class="shortcut-error">
+                            ⚠️ {{ $t('launcher.shortcutConflict') }}
+                        </span>
+                        <span class="setting-hint shortcut-saving" v-if="shortcutSaving">
+                            {{ $t('launcher.shortcutSaving') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 窗口宽度 -->
+            <div class="setting-item" :class="{ disabled: !launcherConfig.enabled }">
+                <label class="setting-label">
+                    <span class="setting-icon">📏</span>
+                    {{ $t('launcher.width') }}
+                </label>
+                <div class="setting-control">
+                    <el-slider v-model="launcherConfig.width" :min="400" :max="800" :step="20"
+                        show-input :disabled="!launcherConfig.enabled" style="width: 300px;"
+                        @change="saveLauncherAppearance" />
+                </div>
+            </div>
+
+            <!-- 字体大小 -->
+            <div class="setting-item" :class="{ disabled: !launcherConfig.enabled }">
+                <label class="setting-label">
+                    <span class="setting-icon">🔤</span>
+                    {{ $t('launcher.fontSize') }}
+                </label>
+                <div class="setting-control">
+                    <el-slider v-model="launcherConfig.fontSize" :min="14" :max="24" :step="1"
+                        show-input :disabled="!launcherConfig.enabled" style="width: 300px;"
+                        @change="saveLauncherAppearance" />
+                </div>
+            </div>
+
+            <!-- 圆角大小 -->
+            <div class="setting-item" :class="{ disabled: !launcherConfig.enabled }">
+                <label class="setting-label">
+                    <span class="setting-icon">⬜</span>
+                    {{ $t('launcher.borderRadius') }}
+                </label>
+                <div class="setting-control">
+                    <el-slider v-model="launcherConfig.borderRadius" :min="0" :max="24" :step="2"
+                        show-input :disabled="!launcherConfig.enabled" style="width: 300px;"
+                        @change="saveLauncherAppearance" />
+                </div>
+            </div>
+        </div>
+
         <!-- 自动更新 -->
         <div class="settings-group">
             <div class="group-title">
@@ -317,6 +405,25 @@ const autostartEnabled = ref(false);
 // 倒计时对话框相关
 const showRestartDialog = ref(false);
 const restartIsAppImage = ref(false);
+
+// 启动器配置
+const launcherConfig = ref({
+    enabled: false,
+    shortcut: 'Alt+Space',
+    customShortcut: '',
+    width: 600,
+    fontSize: 16,
+    borderRadius: 12
+});
+const shortcutOptions = [
+    { label: 'Alt+Space', value: 'Alt+Space' },
+    { label: 'Ctrl+Space', value: 'Control+Space' },
+    { label: 'Super+Space', value: 'Super+Space' },
+    { label: 'Alt+Shift+Space', value: 'Alt+Shift+Space' },
+    { label: t('launcher.shortcutCustom'), value: 'custom' }
+];
+const shortcutConflict = ref(false);
+const shortcutSaving = ref(false);
 
 // 常用系统字体列表（使用 computed 响应语言变化）
 const availableFonts = computed(() => [
@@ -651,19 +758,64 @@ function onFontChanged(event, fontValue) {
 }
 
 async function loadSettings() {
-    currentLanguage.value = await window.api.i18n.getLanguage();
+    // 1. 一次 IPC 获取 canbox.json 中的大部分配置（取代原来的 9 次独立 IPC 调用）
+    let config;
+    try {
+        const result = await window.api.getCanboxConfig();
+        if (!result.success) {
+            console.error('[Settings] 批量加载配置失败:', result.error);
+            return;
+        }
+        config = result.data;
+    } catch (error) {
+        console.error('[Settings] 批量加载配置异常:', error);
+        return;
+    }
+
+    // 语言
+    currentLanguage.value = config.language;
     availableLanguages.value = await window.api.i18n.getAvailableLanguages();
 
-    const savedFont = await window.api.font.get();
-    currentFont.value = savedFont;
-    applyFont(savedFont);
+    // 开机启动
+    autostartEnabled.value = config.autostart ?? false;
 
-    const savedExecutionMode = await window.api.execution.getGlobalMode();
-    currentExecutionMode.value = savedExecutionMode || 'window';
+    // 启动器配置（同步设置后标记 init 完成，阻止 @change 副作用）
+    applyLauncherConfig(config.launcher);
+    launcherInitComplete = true;
 
-    // 初始化 zoom store（会在内部获取初始值并监听变化）
-    await zoomStore.init();
+    // 字体
+    currentFont.value = config.font;
+    applyFont(config.font);
 
+    // 执行模式
+    currentExecutionMode.value = config.executionMode || 'window';
+
+    // 缩放：直接设 Pinia state，避免额外 IPC；仍需注册变更监听
+    zoomStore.factor = config.zoomFactor;
+    window.api.zoom.onChanged((newFactor) => {
+        zoomStore.factor = newFactor;
+    });
+
+    // 日志保留天数
+    logRetentionDays.value = config.logRetentionDays ?? 30;
+
+    // 更新配置（含更新源）
+    const uc = config.updateCenter || {};
+    updateConfig.value = {
+        enabled: uc.enabled ?? true,
+        checkOnStartup: uc.checkOnStartup ?? true,
+        checkFrequency: uc.checkFrequency ?? 'startup',
+        autoDownload: uc.autoDownload ?? false,
+        autoInstall: uc.autoInstall ?? 'ask',
+        skippedVersions: uc.skippedVersions ?? [],
+        lastCheckTime: uc.lastCheckTime ?? null
+    };
+    updateSource.value = uc.updateSource || 'auto';
+
+    // 2. 更新源运行时信息（currentSource 需要运行时检测，单独获取）
+    await loadUpdateSource();
+
+    // 3. 动态数据（不在 canbox.json 中）
     const pathResult = await window.api.userData.getCurrentPath();
     if (pathResult.success) {
         currentDataPath.value = pathResult.path;
@@ -673,17 +825,113 @@ async function loadSettings() {
     if (usageResult.success) {
         diskUsage.value = usageResult.size;
     }
+}
 
-    logRetentionDays.value = await window.api.logViewer.getRetentionDays();
+// ========== 启动器相关逻辑 ==========
 
-    await loadUpdateConfig();
-    await loadUpdateSource();
+/**
+ * 从批量配置中同步设置启动器配置（同步函数，避免"闪一下"）
+ * @param {Object|null} data - 启动器配置数据
+ */
+function applyLauncherConfig(data) {
+    if (!data) return;
+    const isPreset = shortcutOptions.some(opt => opt.value === data.shortcut);
+    launcherConfig.value = {
+        enabled: data.enabled ?? false,
+        shortcut: isPreset ? data.shortcut : 'custom',
+        customShortcut: isPreset ? '' : (data.shortcut || ''),
+        width: data.width ?? 600,
+        fontSize: data.fontSize ?? 16,
+        borderRadius: data.borderRadius ?? 12
+    };
+}
 
-    // 加载开机启动状态
-    const autostartResult = await window.api.autostart.get();
-    if (autostartResult.success) {
-        autostartEnabled.value = autostartResult.enabled;
+// 标记启动器配置是否已完成初始化加载，防止 slider @change 在初始化时触发保存
+let launcherInitComplete = false;
+
+async function saveLauncherConfig() {
+    if (!launcherInitComplete) return;
+    try {
+        const actualShortcut = launcherConfig.value.shortcut === 'custom'
+            ? launcherConfig.value.customShortcut
+            : launcherConfig.value.shortcut;
+
+        await window.api.launcher.setConfig({
+            enabled: launcherConfig.value.enabled,
+            shortcut: actualShortcut,
+            width: launcherConfig.value.width,
+            fontSize: launcherConfig.value.fontSize,
+            borderRadius: launcherConfig.value.borderRadius
+        });
+    } catch (error) {
+        console.error('[Settings] 保存启动器配置失败:', error);
     }
+}
+
+/**
+ * 仅保存启动器外观配置（宽度、字体、圆角），
+ * 不触碰 enabled / shortcut，避免滑块 @change 误改写开关状态
+ */
+async function saveLauncherAppearance() {
+    if (!launcherInitComplete) return;
+    try {
+        await window.api.launcher.setConfig({
+            width: launcherConfig.value.width,
+            fontSize: launcherConfig.value.fontSize,
+            borderRadius: launcherConfig.value.borderRadius
+        });
+    } catch (error) {
+        console.error('[Settings] 保存启动器外观配置失败:', error);
+    }
+}
+
+async function handleLauncherEnableChange(enabled) {
+    // 初始化阶段不处理，避免 loadLauncherConfig 程序化设置 v-model 时触发副作用
+    if (!launcherInitComplete) return;
+
+    // 保存配置
+    await saveLauncherConfig();
+
+    if (enabled && !autostartEnabled.value) {
+        // 自动开启开机自启
+        try {
+            const result = await window.api.autostart.set(true);
+            if (result.success) {
+                autostartEnabled.value = true;
+            }
+        } catch (error) {
+            console.error('[Settings] 自动开启开机自启失败:', error);
+        }
+    }
+}
+
+async function handleLauncherShortcutChange() {
+    if (!launcherInitComplete) return;
+    shortcutConflict.value = false;
+    shortcutSaving.value = true;
+
+    const actualShortcut = launcherConfig.value.shortcut === 'custom'
+        ? launcherConfig.value.customShortcut
+        : launcherConfig.value.shortcut;
+
+    if (!actualShortcut) {
+        shortcutSaving.value = false;
+        return;
+    }
+
+    // 检查快捷键是否可用
+    const result = await window.api.launcher.checkShortcut(actualShortcut);
+    if (result.success && !result.available) {
+        shortcutConflict.value = true;
+    }
+
+    // 保存配置
+    await saveLauncherConfig();
+    shortcutSaving.value = false;
+}
+
+async function handleCustomShortcutBlur() {
+    await handleLauncherShortcutChange();
 }
 
 onMounted(() => {
@@ -926,5 +1174,27 @@ onUnmounted(() => {
     margin-top: 8px;
     font-size: 14px;
     color: #606266;
+}
+
+/* 启动器快捷键配置 */
+.shortcut-config {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.shortcut-conflict input {
+    border-color: #f56c6c !important;
+}
+
+.shortcut-error {
+    font-size: 13px;
+    color: #f56c6c;
+}
+
+.shortcut-saving {
+    font-size: 13px;
+    color: #909399;
 }
 </style>

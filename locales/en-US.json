@@ -487,5 +487,20 @@
         "create": "Create",
         "createSuccess": "Web app created successfully!",
         "createFailed": "Failed to create web app: "
+    },
+    "launcher": {
+        "title": "Launcher",
+        "enable": "Enable Launcher",
+        "autostartHint": "Consider enabling autostart to ensure the shortcut always works",
+        "shortcut": "Global Shortcut",
+        "shortcutPlaceholder": "Enter shortcut, e.g. Ctrl+Alt+K",
+        "shortcutConflict": "This shortcut is already in use, please choose another",
+        "shortcutSaving": "Saving...",
+        "shortcutCustom": "Custom...",
+        "width": "Window Width",
+        "fontSize": "Font Size",
+        "borderRadius": "Corner Radius",
+        "searchPlaceholder": "Search apps...",
+        "noResults": "No results found"
     }
 }

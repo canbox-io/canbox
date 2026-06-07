@@ -267,6 +267,7 @@ contextBridge.exposeInMainWorld(
             get: (key, defaultValue) => ipcRenderer.invoke('canboxConfig-get', key, defaultValue),
             set: (key, value) => ipcRenderer.invoke('canboxConfig-set', key, value)
         },
+        getCanboxConfig: () => ipcRenderer.invoke('get-canbox-config'),
         fileTask: {
             // 创建任务
             create: (type, uid, options) =>
@@ -368,6 +369,20 @@ contextBridge.exposeInMainWorld(
             fetchWebsiteInfo: (url) => ipcRenderer.invoke('fetch-website-info', url),
             createWebApp: (options) => ipcRenderer.invoke('create-web-app', options),
             getDefaultIconPath: () => ipcRenderer.invoke('get-default-icon-path')
+        },
+        launcher: {
+            getConfig: () => ipcRenderer.invoke('launcher:getConfig'),
+            setConfig: (config) => ipcRenderer.invoke('launcher:setConfig', config),
+            toggle: () => ipcRenderer.invoke('launcher:toggle'),
+            hide: () => ipcRenderer.invoke('launcher:hide'),
+            getAllApps: () => ipcRenderer.invoke('launcher:getAllApps'),
+            searchApps: (query, limit) => ipcRenderer.invoke('launcher:searchApps', query, limit),
+            launchApp: (app) => ipcRenderer.invoke('launcher:launchApp', app),
+            checkShortcut: (shortcut) => ipcRenderer.invoke('launcher:checkShortcut', shortcut),
+            getAppIcon: (iconPath) => ipcRenderer.invoke('launcher:getAppIcon', iconPath),
+            onShown: (callback) => {
+                ipcRenderer.on('launcher:shown', callback);
+            }
         }
     }
 );

@@ -491,5 +491,20 @@
         "create": "创建",
         "createSuccess": "网页应用创建成功！",
         "createFailed": "创建网页应用失败："
+    },
+    "launcher": {
+        "title": "启动器",
+        "enable": "启用启动器",
+        "autostartHint": "建议开启开机自启，以确保快捷键始终可用",
+        "shortcut": "全局快捷键",
+        "shortcutPlaceholder": "输入快捷键，如 Ctrl+Alt+K",
+        "shortcutConflict": "此快捷键已被占用，请更换",
+        "shortcutSaving": "保存中...",
+        "shortcutCustom": "自定义...",
+        "width": "窗口宽度",
+        "fontSize": "字体大小",
+        "borderRadius": "圆角大小",
+        "searchPlaceholder": "搜索应用...",
+        "noResults": "无匹配结果"
     }
 }

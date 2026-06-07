@@ -340,6 +340,12 @@ const handleClose = () => {
 
 // 事件监听
 const setupEventListeners = () => {
+  // 浏览器环境无 window.api，跳过事件监听
+  if (!window.api) {
+    console.log('[UpdateDialog] window.api not available, skipping event listeners');
+    return;
+  }
+
   // 监听下载进度
   window.api.on('download-progress', (event, progress) => {
     if (progress.percent !== undefined) {
@@ -374,6 +380,7 @@ const setupEventListeners = () => {
 };
 
 const removeEventListeners = () => {
+  if (!window.api) return;
   window.api.off('download-progress');
   window.api.off('update-downloaded');
   window.api.off('update-downloaded-restart');

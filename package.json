@@ -2,7 +2,7 @@
     "name": "canbox",
     "productName": "canbox",
     "private": true,
-    "version": "0.5.8",
+    "version": "0.6.1",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",

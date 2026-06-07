@@ -2,7 +2,7 @@ const { ipcMain, dialog, shell, app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 const repoIpcHandler = require('./modules/ipc/repoIpcHandler');
 const shortcutIpcHandler = require('./modules/ipc/shortcutIpcHandler');
 const appManagerIpcHandler = require('./modules/ipc/appManagerIpcHandler');
@@ -16,6 +16,7 @@ const userDataMigration = require('./modules/main/userDataMigration');
 const logIpcHandler = require('./modules/ipc/logIpcHandler');
 const { getAutoUpdater, IPC_CHANNELS, getUpdateSource, setUpdateSource, getSourceSuccessRates, getConfig, saveConfig } = require('./modules/update-center');
 const { FileTaskIPC } = require('./modules/file-task');
+const launcherManager = require('./modules/launcher/launcherManager');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -676,7 +677,7 @@ function initIpcHandlers() {
         }
     });
 
-    // 设置缩放比例
+    // 设置缩放比例（仅影响发起请求的窗口）
     ipcMain.handle('zoom-set', (event, factor) => {
         try {
             // 限制缩放范围 0.5 - 2.0
@@ -686,13 +687,13 @@ function initIpcHandlers() {
             const canboxStore = getCanboxStore();
             canboxStore.set('zoomFactor', clampedFactor);
             
-            // 应用到所有窗口
-            BrowserWindow.getAllWindows().forEach(win => {
-                if (!win.isDestroyed()) {
-                    win.webContents.setZoomFactor(clampedFactor);
-                    win.webContents.send('zoom-changed', clampedFactor);
-                }
-            });
+            // 仅应用到发起请求的窗口
+            try {
+                event.sender.setZoomFactor(clampedFactor);
+                event.sender.send('zoom-changed', clampedFactor);
+            } catch (e) {
+                // webContents 可能已销毁
+            }
 
             logger.info('Zoom factor set to: {}', clampedFactor);
             return { success: true, factor: clampedFactor };
@@ -702,18 +703,18 @@ function initIpcHandlers() {
         }
     });
 
-    // 重置缩放比例
-    ipcMain.handle('zoom-reset', () => {
+    // 重置缩放比例（仅影响发起请求的窗口）
+    ipcMain.handle('zoom-reset', (event) => {
         try {
             const canboxStore = getCanboxStore();
             canboxStore.set('zoomFactor', 1.0);
             
-            BrowserWindow.getAllWindows().forEach(win => {
-                if (!win.isDestroyed()) {
-                    win.webContents.setZoomFactor(1.0);
-                    win.webContents.send('zoom-changed', 1.0);
-                }
-            });
+            try {
+                event.sender.setZoomFactor(1.0);
+                event.sender.send('zoom-changed', 1.0);
+            } catch (e) {
+                // webContents 可能已销毁
+            }
 
             logger.info('Zoom factor reset to 1.0');
             return { success: true, factor: 1.0 };
@@ -864,6 +865,198 @@ X-GNOME-Autostart-enabled=true
         } catch (error) {
             logger.error('Failed to set canbox config:', error);
             return { success: false, msg: error.message };
+        }
+    });
+
+    // ========== 启动器相关 IPC 处理 ==========
+
+    // 获取启动器配置
+    ipcMain.handle('launcher:getConfig', () => {
+        try {
+            return { success: true, data: launcherManager.config };
+        } catch (error) {
+            logger.error('[Launcher] 获取配置失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 保存启动器配置
+    ipcMain.handle('launcher:setConfig', (event, config) => {
+        try {
+            launcherManager.saveConfig(config);
+            return { success: true };
+        } catch (error) {
+            logger.error('[Launcher] 保存配置失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 检查快捷键是否可用
+    ipcMain.handle('launcher:checkShortcut', (event, shortcut) => {
+        try {
+            const result = launcherManager.checkShortcut(shortcut);
+            return { success: true, available: result.success };
+        } catch (error) {
+            logger.error('[Launcher] 检查快捷键失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 切换启动器窗口
+    ipcMain.handle('launcher:toggle', () => {
+        try {
+            launcherManager.toggle();
+            return { success: true };
+        } catch (error) {
+            logger.error('[Launcher] 切换窗口失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 隐藏启动器窗口
+    ipcMain.handle('launcher:hide', () => {
+        try {
+            launcherManager.hide();
+            return { success: true };
+        } catch (error) {
+            logger.error('[Launcher] 隐藏窗口失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取所有应用
+    ipcMain.handle('launcher:getAllApps', async () => {
+        try {
+            const apps = launcherManager.loadApps();
+            logger.info('[Launcher] 应用列表: {} 个', apps.length);
+            return { success: true, data: apps };
+        } catch (error) {
+            logger.error('[Launcher] 获取应用列表失败: {}', error.message);
+            return { success: false, error: error.message, data: [] };
+        }
+    });
+
+    // 搜索应用（统一在主进程执行，支持子序列模糊匹配 + 拼音）
+    ipcMain.handle('launcher:searchApps', async (event, query, limit) => {
+        try {
+            const results = launcherManager.searchApps(query, limit || 5);
+            return { success: true, data: results };
+        } catch (error) {
+            logger.error('[Launcher] 搜索应用失败: {}', error.message);
+            return { success: false, error: error.message, data: [] };
+        }
+    });
+
+    // 启动应用
+    ipcMain.handle('launcher:launchApp', async (event, app) => {
+        try {
+            if (app.source === 'canbox' && app.uid) {
+                // Canbox 应用：通过 appLoader 启动
+                const appLoader = require('./modules/main/appLoader');
+                await appLoader.loadApp(app.uid, false, null);
+            } else if (app.exec) {
+                // 系统应用：执行 Exec 命令
+                const childProcess = exec(app.exec, (error) => {
+                    if (error) {
+                        logger.error('[Launcher] 启动系统应用失败: {} - {}', app.name, error.message);
+                    }
+                });
+                // 分离子进程，避免阻塞
+                childProcess.unref();
+            } else {
+                logger.warn('[Launcher] 无法启动应用，缺少 exec 命令: {}', app.name);
+                return { success: false, error: '无法启动应用，缺少执行命令' };
+            }
+
+            logger.info('[Launcher] 启动应用: {}', app.name);
+            return { success: true };
+        } catch (error) {
+            logger.error('[Launcher] 启动应用失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取应用图标（返回 base64 data URI，解决 file:// 协议在浏览器环境不可用的问题）
+    ipcMain.handle('launcher:getAppIcon', async (event, iconPath) => {
+        try {
+            if (!iconPath) {
+                return { success: false, error: 'iconPath is empty' };
+            }
+
+            const fs = require('fs');
+            const path = require('path');
+
+            // 检查文件是否存在（支持 asar 虚拟文件系统和普通文件系统）
+            if (!fs.existsSync(iconPath)) {
+                logger.debug('[Launcher] 图标文件不存在: {}', iconPath);
+                return { success: false, error: 'file not found' };
+            }
+
+            const ext = path.extname(iconPath).toLowerCase();
+            const mimeType = ext === '.svg' ? 'image/svg+xml'
+                : ext === '.png' ? 'image/png'
+                : ext === '.ico' ? 'image/x-icon'
+                : ext === '.xpm' ? 'image/x-xpixmap'
+                : 'image/png';
+
+            const data = fs.readFileSync(iconPath);
+            const base64 = Buffer.from(data).toString('base64');
+            return { success: true, data: `data:${mimeType};base64,${base64}` };
+        } catch (error) {
+            logger.error('[Launcher] 读取图标失败: {}', error.message);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // ========== 批量读取 Canbox 配置 ==========
+
+    // 一次性返回设置页面所需的所有 canbox.json 配置，减少 IPC 往返次数
+    ipcMain.handle('get-canbox-config', () => {
+        try {
+            const canboxStore = getCanboxStore();
+
+            // 开机启动：同步存储值与系统实际状态
+            let autostartEnabled = canboxStore.get('autostart', false);
+            if (process.platform === 'linux') {
+                const autostartDir = path.join(os.homedir(), '.config', 'autostart');
+                const desktopFile = path.join(autostartDir, 'canbox.desktop');
+                const systemEnabled = fs.existsSync(desktopFile);
+                if (systemEnabled !== autostartEnabled) {
+                    canboxStore.set('autostart', systemEnabled);
+                    autostartEnabled = systemEnabled;
+                }
+            }
+
+            return {
+                success: true,
+                data: {
+                    language: currentLanguage,
+                    autostart: autostartEnabled,
+                    launcher: launcherManager.config || canboxStore.get('launcher', {
+                        enabled: false,
+                        shortcut: 'Alt+Space',
+                        width: 600,
+                        fontSize: 16,
+                        borderRadius: 12
+                    }),
+                    font: canboxStore.get('font', 'default'),
+                    executionMode: canboxStore.get('execution.globalMode', 'window'),
+                    zoomFactor: canboxStore.get('zoomFactor', 1.0),
+                    logRetentionDays: canboxStore.get('logRetentionDays', 30),
+                    updateCenter: canboxStore.get('updateCenter', {
+                        enabled: true,
+                        checkOnStartup: true,
+                        checkFrequency: 'startup',
+                        autoDownload: false,
+                        autoInstall: false,
+                        updateSource: 'auto',
+                        skippedVersions: []
+                    })
+                }
+            };
+        } catch (error) {
+            logger.error('[CanboxConfig] 读取配置失败: {}', error.message);
+            return { success: false, error: error.message };
         }
     });
 }

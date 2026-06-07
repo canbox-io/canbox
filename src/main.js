@@ -8,6 +8,8 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { createPinia } from 'pinia'
 import i18n, { initI18n } from './i18n'
 
+console.log('[main.js] Script loaded, initializing app...');
+
 const app = createApp(App)
 const pinia = createPinia()
 
@@ -18,22 +20,60 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 app.use(ElementPlus).use(router).use(pinia).use(i18n)
 
+// mount 应用的统一入口
+function doMount() {
+    if (mountCalled) return;
+    mountCalled = true;
+    const el = document.querySelector('#app');
+    console.log('[main.js] Mounting app, #app element found:', !!el, ', innerHTML length:', el ? el.innerHTML.length : 'N/A');
+    app.mount('#app');
+    initZoomFeature();
+}
+let mountCalled = false;
+
+// 兜底超时：5 秒后无论 i18n 是否完成都先 mount
+const mountTimeout = setTimeout(() => {
+    console.warn('[main.js] initI18n timeout after 5s, mounting app anyway');
+    doMount();
+}, 5000);
+
 // 初始化 i18n 并等待完成后 mount 应用
 initI18n().then(() => {
-    console.log('i18n loaded');
-    app.mount('#app');
-
-    // 初始化全局缩放功能 (Ctrl + 滚轮)
-    initZoomFeature();
+    console.log('[main.js] i18n loaded successfully');
+    clearTimeout(mountTimeout);
+    doMount();
 }).catch(error => {
-    console.error('Failed to initialize i18n:', error);
+    console.error('[main.js] Failed to initialize i18n:', error);
+    clearTimeout(mountTimeout);
     // 即使失败也要 mount 应用，避免白屏
-    app.mount('#app');
-    initZoomFeature();
+    doMount();
 });
 
 // 全局缩放功能
 function initZoomFeature() {
+    // 浏览器环境或无 window.api 时跳过
+    if (!window.api) {
+        console.log('Zoom feature skipped: window.api not available');
+        return;
+    }
+
+    // launcher 窗口不支持 zoom 变动，只拦截事件阻止 Chromium 原生 zoom
+    if (window.location.hash === '#/launcher') {
+        document.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('keydown', (e) => {
+            if (!e.ctrlKey) return;
+            if (e.key === '+' || e.key === '=' || e.key === '-' || e.key === '_' || e.key === '0') {
+                e.preventDefault();
+            }
+        });
+
+        console.log('Zoom feature skipped: launcher window (events intercepted only)');
+        return;
+    }
+
     // 当前缩放比例
     let currentZoom = 1.0;
 

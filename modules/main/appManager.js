@@ -372,6 +372,23 @@ async function importAppFromZip(task, zipPath, uid) {
 
         taskManager.updateProgress(task.id, 100, '导入完成 / Import completed', 0);
 
+        // 导入成功后自动生成快捷方式
+        try {
+            const { generateShortcuts } = require('@modules/main/shortcutManager');
+            const appsData = getAllApps().data || {};
+            generateShortcuts(appsData).then(result => {
+                if (result.success) {
+                    logger.info('[importAppFromZip] 快捷方式已自动生成');
+                } else {
+                    logger.warn('[importAppFromZip] 快捷方式生成失败: {}', result.msg);
+                }
+            }).catch(err => {
+                logger.error('[importAppFromZip] 快捷方式生成异常: {}', err.message);
+            });
+        } catch (shortcutError) {
+            logger.error('[importAppFromZip] 快捷方式生成失败: {}', shortcutError.message);
+        }
+
         return { success: true, uuid: uid };
 
     } catch (error) {

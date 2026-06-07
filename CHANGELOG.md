@@ -5,6 +5,52 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.6.0] - 2026-06-07
+
+### chore | 维护 / Maintenance
+
+修复自动更新源默认值处理：当配置中 updateSource 为 undefined 时，正确走自动选择更新源而非抛出「未知的更新源」错误
+
+Fix auto-update source default handling: treat undefined updateSource as 'auto' instead of throwing "unknown update source" error
+
+## [0.5.9 - add launcher & auto-start / 新增启动器与开机自启] - 2026-06-07
+
+### feat | 新功能 / Features
+
+添加应用启动器（Launcher）功能，支持全局快捷键快速搜索启动应用
+添加开机自动启动功能
+为启动器窗口添加独立 session 分区，彻底解决 zoom 跨窗口传染问题
+优化启动器窗口阴影渲染与设置页加载性能，缩短初始化耗时
+添加多项目工作区与架构声明文件
+
+Add application launcher with global shortcut for quick app search and launch
+Add auto-start on system boot feature
+Add independent session partition for launcher window to prevent cross-window zoom contamination
+Optimize launcher shadow rendering and settings page load performance
+Add multi-project workspace and architecture roadmap files
+
+### fix | 问题修复 / Bug Fixes
+
+限制 Canbox 主窗口缩放仅影响自身，锁定 Launcher 窗口 zoom 为 1.0
+调整 Launcher 窗口默认高度并启用 Linux 圆角配置
+修复 Launcher 窗口图标加载与设置项初始化问题
+
+Restrict main window zoom to itself only, lock launcher zoom at 1.0
+Adjust launcher default height and enable Linux rounded corner configuration
+Fix launcher icon loading and settings initialization issues
+
+### docs | 文档 / Documentation
+
+添加 Zoom 机制与会话隔离设计文档
+新增启动器功能规划文档及依赖说明
+添加多项目管理方案分析文档
+添加 VSCode 扩展可行性分析与能力规划文档
+
+Add zoom mechanism and session isolation design document
+Add launcher feature planning document and dependency notes
+Add multi-project management solution analysis document
+Add VSCode extension feasibility and capability planning document
+
 ## [0.5.7] - 2026-06-03
 
 ### feat | 新功能 / Features

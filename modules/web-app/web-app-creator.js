@@ -128,6 +128,24 @@ async function createWebApp(options) {
 
         logger.info('WebApp created successfully: {} ({})', name, uid);
 
+        // 创建完成后自动生成快捷方式
+        try {
+            const { generateShortcuts } = require('@modules/main/shortcutManager');
+            const { getAllApps } = require('@modules/main/appManager');
+            const appsData = getAllApps().data || {};
+            generateShortcuts(appsData).then(result => {
+                if (result.success) {
+                    logger.info('[createWebApp] 快捷方式已自动生成');
+                } else {
+                    logger.warn('[createWebApp] 快捷方式生成失败: {}', result.msg);
+                }
+            }).catch(err => {
+                logger.error('[createWebApp] 快捷方式生成异常: {}', err.message);
+            });
+        } catch (shortcutError) {
+            logger.error('[createWebApp] 快捷方式生成失败: {}', shortcutError.message);
+        }
+
         return { success: true, uid: uid, appId: appId };
     } catch (error) {
         logger.error('WebApp creation failed: {}', error.message);

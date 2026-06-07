@@ -52,6 +52,9 @@ const processBridge = require('@modules/childprocess/processBridge');
 // 引入 IPC 消息处理模块
 const { initIpcHandlers } = require('./ipcHandlers');
 
+// 引入启动器管理器
+const launcherManager = require('./modules/launcher/launcherManager');
+
 // 清除启动时控制台的"Electron Security Warning (Insecure Content-Security-Policy)"报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
@@ -237,6 +240,9 @@ if (!getTheLock) {
             });
         }
 
+        // 初始化启动器
+        launcherManager.init();
+
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';
         let isDevTag = false;
@@ -295,6 +301,9 @@ app.on('before-quit', () => {
 
     // 停止所有子进程
     executionDispatcher.closeAllApps();
+
+    // 销毁启动器
+    launcherManager.destroy();
 
     // 设置强制退出标志，允许窗口真正关闭
     isForceQuit = true;

@@ -41,6 +41,7 @@ Canbox is an open project, and every contribution helps make it better!
 - **Auto Update**: Automatic update checking with GitHub and Gitee dual sources, configurable check frequency.
 - **Customization**: Configurable language, font, data path, and window zoom (0.5x ~ 2.0x).
 - **Log Viewer**: Built-in log viewer with real-time monitoring, filtering, search, and export capabilities.
+- **Launcher**: Global hotkey (default `Alt+Space`) to quickly search and launch Canbox and system applications with Chinese pinyin matching support.
 - **File Task Management**: Unified management for download, import, export, and other file operations.
 
 # Canbox Usage
@@ -130,6 +131,49 @@ For more apps, please visit: [Canbox App Center](https://rexlevin.github.io/canb
     }
 ]
 ```
+
+## Launcher
+
+![Launcher](./public/screenshot/Launcher.png)
+
+The Launcher is Canbox's quick launch tool, similar to uTools. Press the global hotkey to bring up the search box and quickly search and launch applications.
+
+### Usage
+
+1. Press the global hotkey (default `Alt+Space`) to open the launcher window
+2. Type keywords to search applications (supports Chinese name, full pinyin, and initial letters)
+3. Use `↑` `↓` arrow keys to navigate, press `Enter` to launch
+4. Click an application to launch it directly
+5. Press `Esc` or click outside the window to hide the launcher
+
+### Search Scope
+
+The launcher searches applications from the following sources:
+
+- **Canbox Installed Apps**: All applications installed through Canbox
+- **System Applications**: Applications registered via `.desktop` files on Linux (including Flatpak apps)
+
+### Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Show/Hide Launcher | Global hotkey (default `Alt+Space`, customizable in Settings) |
+| Hide Launcher | `Esc` |
+| Select Previous | `↑` |
+| Select Next | `↓` |
+| Launch Selected App | `Enter` |
+
+### Settings
+
+In the Settings page under "🚀 Launcher" section:
+
+- **Enable/Disable**: Toggle the launcher feature on/off
+- **Global Shortcut**: Choose from presets (`Alt+Space`, `Super+Space`, etc.) or custom key combination
+- **Window Width**: Adjustable 400-800px
+- **Font Size**: Adjustable 14-24px
+- **Border Radius**: Adjustable 0-24px
+
+[Launcher settings interface screenshot]
 
 ## App Development
 
@@ -221,6 +265,12 @@ For detailed development guides, please refer to:
 ![Settings2](./public/screenshot/Settings2.png)
 
 Canbox provides rich settings options to help you personalize the application configuration.
+
+### Launcher
+
+- **Enable Launcher**: When enabled, press the global hotkey to quickly search and launch applications
+- **Global Shortcut**: Customize the launcher shortcut (default `Alt+Space`), supports preset and custom key combinations
+- **Window Style**: Adjust search box width (400-800px), font size (14-24px), and border radius (0-24px)
 
 ### General Settings
 
