@@ -22,9 +22,9 @@ moduleAlias.addAliases({
 moduleAlias();
 
 const logger = require('@modules/utils/logger');
-const { getCanboxStore } = require('@modules/main/storageManager');
-const ModeDetector = require('@modules/execution/modeDetector');
-const { getAutoUpdater } = require('@modules/update-center');
+const { getCanboxStore } = require('@modules/canbox/main/storageManager');
+const ModeDetector = require('@modules/canbox/execution/modeDetector');
+const { getAutoUpdater } = require('@modules/canbox/update-center');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -43,11 +43,11 @@ const uatDev = (() => {
 logger.info('[main.js] uatDev: {}', JSON.stringify(uatDev));
 
 // 引入 RepoMonitorService
-const RepoMonitorService = require('@modules/services/repoMonitorService');
+const RepoMonitorService = require('@modules/canbox/services/repoMonitorService');
 
-const appLoader = require('@modules/main/appLoader');
-const executionDispatcher = require('@modules/execution/executionDispatcher');
-const processBridge = require('@modules/childprocess/processBridge');
+const appLoader = require('@modules/canbox/main/appLoader');
+const executionDispatcher = require('@modules/canbox/execution/executionDispatcher');
+const processBridge = require('@modules/canbox/childprocess/processBridge');
 
 // 引入 IPC 消息处理模块
 const { initIpcHandlers } = require('./ipcHandlers');
@@ -169,7 +169,7 @@ if (!getTheLock) {
         logger.info('[main.js] Log cleanup executed with retention days: {}', retentionDays);
 
         // 清理遗留的文件任务临时目录
-        const FileTaskManager = require('@modules/file-task/file-task-manager');
+        const FileTaskManager = require('@modules/canbox/file-task/file-task-manager');
         FileTaskManager.getInstance().cleanupStaleTasks().then(result => {
             logger.info('[main.js] 遗留临时目录清理完成, cleaned={}, errors={}', result.cleaned.length, result.errors.length);
         }).catch(err => {
@@ -223,8 +223,8 @@ if (!getTheLock) {
 
         // 初始化快捷方式（异步）
         if (!isDev) {
-            const shortcutManager = require('./modules/main/shortcutManager');
-            const { getAllApps } = require('./modules/main/appManager');
+            const shortcutManager = require('./modules/canbox/main/shortcutManager');
+            const { getAllApps } = require('./modules/canbox/main/appManager');
             const package = require('./package.json');
             shortcutManager.initShortcuts(package.version, getAllApps().data || {}).then((result) => {
                 if (result.success) {

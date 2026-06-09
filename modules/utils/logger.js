@@ -2,7 +2,7 @@ const log4js = require('log4js');
 const path = require('path');
 const fs = require('fs');
 const { app } = require('electron');
-const pathManager = require('@modules/main/pathManager');
+const pathManager = require('@modules/canbox/main/pathManager');
 
 // 获取日志目录路径
 function getLogDir() {

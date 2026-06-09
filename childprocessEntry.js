@@ -61,7 +61,7 @@ process.env.CANBOX_APP_PATH = path.dirname(appPath);
 
 // 设置完成后，再加载依赖 pathManager 的模块
 const logger = require('@modules/utils/logger');
-const processBridge = require('@modules/childprocess/processBridge');
+const processBridge = require('@modules/canbox/childprocess/processBridge');
 
 // 记录环境变量设置
 if (userData) {
@@ -86,7 +86,7 @@ app.whenReady().then(() => {
     logger.info(`[childprocess] Starting app ${appId}, dev: ${devTag}, path: ${appPath}`);
 
     // 初始化API IPC处理器（子进程需要提供Canbox API）
-    const initApiIpcHandlers = require('@modules/main/api');
+    const initApiIpcHandlers = require('@modules/app/api');
     initApiIpcHandlers();
 
     // 初始化主进程桥接
@@ -190,7 +190,7 @@ function createChildWebAppWindow(parentWin, url, appJson, appPath, sess) {
 
     // WebApp 导航增强（快捷键、右键菜单）
     if (appJson?.type === 'webapp') {
-        const { setupWebAppNavigation } = require('@modules/web-app/web-app-navigator');
+        const { setupWebAppNavigation } = require('@modules/canbox/web-app/web-app-navigator');
         setupWebAppNavigation(childWin);
     }
 
@@ -249,7 +249,7 @@ function setupExternalUrlHandler(win, isWebApp = false, appJson = null, appPath 
 function createAppWindow() {
     try {
         // 在 CANBOX_USER_DATA 环境变量设置之后加载 winState
-        const winState = require('@modules/main/winState');
+        const winState = require('@modules/canbox/main/winState');
 
         // 读取 app.json
         const appJsonPath = path.join(appPath, 'app.json');
@@ -273,7 +273,7 @@ function createAppWindow() {
         const sess = session.fromPartition(partition);
         sess.registerPreloadScript({
             type: 'frame',
-            filePath: path.join(__dirname, 'modules/app.api.js')
+            filePath: path.join(__dirname, 'modules/app/app.preload.js')
         });
 
         // 默认窗口选项
@@ -394,12 +394,12 @@ function createAppWindow() {
 
         // WebApp 导航增强
         if (appJson.type === 'webapp') {
-            const { setupWebAppNavigation } = require('@modules/web-app/web-app-navigator');
+            const { setupWebAppNavigation } = require('@modules/canbox/web-app/web-app-navigator');
             setupWebAppNavigation(appWin);
         }
 
         // 窗口缩放（Ctrl+滚轮 / Ctrl++/-/0），默认启用，支持持久化
-        const { setupAppZoom, startZoomPersistence } = require('@modules/web-app/app-zoom');
+        const { setupAppZoom, startZoomPersistence } = require('@modules/canbox/web-app/app-zoom');
         const enableZoom = appJson.window?.zoomEnabled !== false;
         const savedZoom = state?.zoomFactor || 1.0;
         setupAppZoom(appWin, enableZoom, savedZoom);

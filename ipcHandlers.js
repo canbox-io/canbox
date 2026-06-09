@@ -3,19 +3,20 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
-const repoIpcHandler = require('./modules/ipc/repoIpcHandler');
-const shortcutIpcHandler = require('./modules/ipc/shortcutIpcHandler');
-const appManagerIpcHandler = require('./modules/ipc/appManagerIpcHandler');
-const initApiIpcHandlers = require('./modules/main/api');
+const repoIpcHandler = require('./modules/canbox/ipc/repoIpcHandler');
+const shortcutIpcHandler = require('./modules/canbox/ipc/shortcutIpcHandler');
+const appManagerIpcHandler = require('./modules/canbox/ipc/appManagerIpcHandler');
+const initApiIpcHandlers = require('./modules/app/api');
 const logger = require('./modules/utils/logger');
 const i18nModule = require('./locales');
-const { getCanboxStore } = require('./modules/main/storageManager');
-const processBridge = require('./modules/childprocess/processBridge');
-const pathManager = require('./modules/main/pathManager');
-const userDataMigration = require('./modules/main/userDataMigration');
-const logIpcHandler = require('./modules/ipc/logIpcHandler');
-const { getAutoUpdater, IPC_CHANNELS, getUpdateSource, setUpdateSource, getSourceSuccessRates, getConfig, saveConfig } = require('./modules/update-center');
-const { FileTaskIPC } = require('./modules/file-task');
+const { getCanboxStore } = require('./modules/canbox/main/storageManager');
+const processBridge = require('./modules/canbox/childprocess/processBridge');
+const pathManager = require('./modules/canbox/main/pathManager');
+const userDataMigration = require('./modules/canbox/main/userDataMigration');
+const logIpcHandler = require('./modules/canbox/ipc/logIpcHandler');
+const { getAutoUpdater, IPC_CHANNELS, getUpdateSource, setUpdateSource, getSourceSuccessRates, getConfig, saveConfig } = require('./modules/canbox/update-center');
+const { FileTaskIPC } = require('./modules/canbox/file-task');
+const canboxDb = require('./modules/canbox/core/canboxDb');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -136,22 +137,22 @@ function initIpcHandlers() {
 
     // 执行模式相关 IPC 处理
     ipcMain.handle('execution-get-global-mode', () => {
-        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/canbox/execution/executionDispatcher');
         return executionDispatcher.getGlobalMode();
     });
 
     ipcMain.handle('execution-set-global-mode', async (event, mode) => {
-        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/canbox/execution/executionDispatcher');
         return executionDispatcher.setGlobalMode(mode);
     });
 
     ipcMain.handle('execution-get-all-app-modes', () => {
-        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/canbox/execution/executionDispatcher');
         return executionDispatcher.getAllAppModes();
     });
 
     ipcMain.handle('execution-set-app-mode', async (event, uid, mode) => {
-        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/canbox/execution/executionDispatcher');
         return executionDispatcher.setAppMode(uid, mode);
     });
 
@@ -195,6 +196,9 @@ function initIpcHandlers() {
 
     // 初始化 API 相关的 IPC 处理逻辑
     initApiIpcHandlers();
+
+    // 初始化 Canbox 操作历史数据库 IPC 处理
+    initCanboxDbIpcHandlers();
 
     // 初始化主进程 IPC 桥接
     processBridge.initMain();
@@ -251,7 +255,7 @@ function initIpcHandlers() {
     // 打包 ASAR
     ipcMain.handle('pack-asar', async (event, uid) => {
         console.info('main.js==pack-asar uid: ', uid);
-        return require('@modules/build-asar').buildAsar(uid);
+        return require('@modules/canbox/build-asar').buildAsar(uid);
     });
 
     // 选择文件
@@ -396,7 +400,7 @@ function initIpcHandlers() {
     // 日志查看器窗口管理
     ipcMain.handle('log-viewer:open', () => {
         try {
-            const logWindowManager = require('@modules/main/logWindowManager');
+            const logWindowManager = require('@modules/canbox/main/logWindowManager');
             logWindowManager.openLogViewer();
             return { success: true };
         } catch (error) {
@@ -407,7 +411,7 @@ function initIpcHandlers() {
 
     ipcMain.handle('log-viewer:close', () => {
         try {
-            const logWindowManager = require('@modules/main/logWindowManager');
+            const logWindowManager = require('@modules/canbox/main/logWindowManager');
             logWindowManager.closeLogViewer();
             return { success: true };
         } catch (error) {
@@ -418,7 +422,7 @@ function initIpcHandlers() {
 
     ipcMain.handle('log-viewer:toggle-always-on-top', () => {
         try {
-            const logWindowManager = require('@modules/main/logWindowManager');
+            const logWindowManager = require('@modules/canbox/main/logWindowManager');
             const newState = logWindowManager.toggleAlwaysOnTop();
             return { success: true, alwaysOnTop: newState };
         } catch (error) {
@@ -863,6 +867,119 @@ X-GNOME-Autostart-enabled=true
             return { success: true };
         } catch (error) {
             logger.error('Failed to set canbox config:', error);
+            return { success: false, msg: error.message };
+        }
+    });
+}
+
+// ========== Canbox 操作历史数据库相关 IPC 处理 ==========
+
+/**
+ * 初始化 canboxDb 相关的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的操作历史记录请求
+ */
+function initCanboxDbIpcHandlers() {
+    // canboxDb-put: 写入记录
+    ipcMain.handle('canboxDb-put', async (event, param) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.put(param, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-get: 获取单条记录
+    ipcMain.handle('canboxDb-get', async (event, param) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.get(param, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-find: 查询记录
+    ipcMain.handle('canboxDb-find', async (event, query) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.find(query, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-remove: 删除记录
+    ipcMain.handle('canboxDb-remove', async (event, param) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.remove(param, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-allDocs: 获取所有记录
+    ipcMain.handle('canboxDb-allDocs', async (event, options) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.allDocs(options, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-getSize: 获取存储大小
+    ipcMain.handle('canboxDb-getSize', async () => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.getSize((size, err) => {
+                    if (err) reject(err);
+                    else resolve(size);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-cleanup: 清理过期记录
+    ipcMain.handle('canboxDb-cleanup', async (event, maxDays) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.cleanupByDays(maxDays, (count, err) => {
+                    if (err) reject(err);
+                    else resolve(count);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
             return { success: false, msg: error.message };
         }
     });

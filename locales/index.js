@@ -45,7 +45,7 @@ function getTranslations(lang) {
 function getCurrentLanguage() {
     try {
         // 延迟加载避免循环依赖
-        const { getCanboxStore } = require('@modules/main/storageManager');
+        const { getCanboxStore } = require('@modules/canbox/main/storageManager');
         const canboxStore = getCanboxStore();
         const savedLanguage = canboxStore.get('language');
         if (savedLanguage) {

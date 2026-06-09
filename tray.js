@@ -2,7 +2,7 @@ const { app, dialog, Menu, Tray } = require('electron');
 const path = require('path')
 const package = require('./package.json');
 const { translate } = require('./locales');
-const logWindowManager = require('@modules/main/logWindowManager');
+const logWindowManager = require('@modules/canbox/main/logWindowManager');
 
 // 窗口状态保存函数（由 main.js 注入）
 let saveWindowStateFn = null;
