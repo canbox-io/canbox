@@ -14,67 +14,6 @@ declare global {
             hello: () => void;
 
             /**
-             * canbox 主程序操作历史数据库
-             * 独立于 APP 的 db，提供操作历史记录功能
-             */
-            canboxDb: {
-                /**
-                 * 插入操作记录
-                 * @param param - 记录参数
-                 * @param param.type - 类型：success | error | warning | info
-                 * @param param.message - 消息内容
-                 * @param param.module - 来源模块
-                 * @param param.details - 额外详情
-                 * @returns Promise<any> - 返回操作结果
-                 */
-                put: (param: { type?: string; message: string; module?: string; details?: any }) => Promise<any>;
-
-                /**
-                 * 根据 ID 获取记录
-                 * @param param - 查询参数
-                 * @param param._id - 记录 ID
-                 * @returns Promise<any> - 返回查询结果
-                 */
-                get: (param: { _id: string }) => Promise<any>;
-
-                /**
-                 * 查询记录
-                 * @param query - 查询条件
-                 * @returns Promise<any> - 返回查询结果
-                 */
-                find: (query: { selector: any; sort?: any; limit?: number; fields?: string[] }) => Promise<any>;
-
-                /**
-                 * 删除记录
-                 * @param param - 删除参数
-                 * @param param._id - 记录 ID
-                 * @param param._rev - 记录版本
-                 * @returns Promise<any> - 返回操作结果
-                 */
-                remove: (param: { _id: string; _rev: string }) => Promise<any>;
-
-                /**
-                 * 获取所有记录
-                 * @param options - 查询选项
-                 * @returns Promise<any> - 返回查询结果
-                 */
-                allDocs: (options?: { limit?: number }) => Promise<any>;
-
-                /**
-                 * 获取存储大小
-                 * @returns Promise<number> - 返回大小（MB）
-                 */
-                getSize: () => Promise<number>;
-
-                /**
-                 * 清理过期记录
-                 * @param maxDays - 最大保留天数
-                 * @returns Promise<number> - 返回删除数量
-                 */
-                cleanup: (maxDays?: number) => Promise<number>;
-            };
-
-            /**
              * 数据库操作模块
              * 基于 PouchDB，提供本地数据持久化能力
              */
