@@ -200,20 +200,21 @@
                     {{ $t('autoUpdate.settings.updateSource') }}
                 </label>
                 <div class="setting-control update-source-control">
-                    <el-radio-group v-model="updateSource" @change="handleUpdateSourceChange">
-                        <el-radio value="auto" class="update-source-radio">
-                            {{ $t('autoUpdate.settings.updateSourceAuto') }}
-                            <span class="source-desc">{{ $t('autoUpdate.settings.updateSourceAutoDesc') }}</span>
-                        </el-radio>
-                        <el-radio value="github" class="update-source-radio">
-                            {{ $t('autoUpdate.settings.updateSourceGithub') }}
-                        </el-radio>
-                        <el-radio value="mirror" class="update-source-radio">
-                            {{ $t('autoUpdate.settings.updateSourceMirror') }}
-                        </el-radio>
-                    </el-radio-group>
-                    <div class="current-source">
-                        {{ $t('autoUpdate.settings.currentSource') }}: {{ currentSourceDisplay }}
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" v-model="updateSource" name="updateSource" value="auto" @change="handleUpdateSourceChange" />
+                            <span class="radio-label">
+                                {{ $t('autoUpdate.settings.updateSourceAuto') }} — <span class="source-desc">{{ $t('autoUpdate.settings.updateSourceAutoDesc') }}</span>
+                            </span>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" v-model="updateSource" name="updateSource" value="github" @change="handleUpdateSourceChange" />
+                            <span class="radio-label">{{ $t('autoUpdate.settings.updateSourceGithub') }}</span>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" v-model="updateSource" name="updateSource" value="mirror" @change="handleUpdateSourceChange" />
+                            <span class="radio-label">{{ $t('autoUpdate.settings.updateSourceMirror') }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -297,15 +298,6 @@ const isCheckingUpdate = ref(false);
 
 // 更新源相关
 const updateSource = ref('auto');
-const currentSource = ref('');
-
-// 当前源显示文本
-const currentSourceDisplay = computed(() => {
-    if (currentSource.value === 'github') return 'GitHub';
-    if (currentSource.value === 'mirror') return t('autoUpdate.settings.updateSourceMirror');
-    if (currentSource.value === 'auto') return currentSource.value;
-    return currentSource.value || '-';
-});
 
 // 自定义数据路径相关
 const currentDataPath = ref('');
@@ -607,18 +599,17 @@ async function loadUpdateSource() {
         const result = await window.api.updateSource.get();
         if (result.success) {
             updateSource.value = result.source;
-            currentSource.value = result.currentSource;
         }
     } catch (error) {
         console.error('Failed to load update source:', error);
     }
 }
 
-async function handleUpdateSourceChange(source) {
+async function handleUpdateSourceChange(event) {
+    const source = event.target.value;
     try {
         const result = await window.api.updateSource.set(source);
         if (result.success) {
-            currentSource.value = source;
             notification.success(t('autoUpdate.settings.sourceChanged', { source: source.toUpperCase() }));
         } else {
             notification.error(result.error || t('common.error'));
@@ -631,10 +622,8 @@ async function handleUpdateSourceChange(source) {
     }
 }
 
-function onUpdateSourceChanged(event) {
-    const { to } = event;
-    updateSource.value = to;
-    currentSource.value = to;
+function onUpdateSourceChanged(_event, data) {
+    updateSource.value = data.to;
 }
 
 function applyFont(fontValue) {
@@ -908,23 +897,33 @@ onUnmounted(() => {
     gap: 8px;
 }
 
-.update-source-radio {
+.radio-group {
     display: flex;
     flex-direction: column;
+    gap: 8px;
+}
+
+.radio-item {
+    display: flex;
     align-items: flex-start;
-    margin-bottom: 4px;
+    cursor: pointer;
 }
 
-.update-source-radio .source-desc {
-    font-size: 12px;
-    color: #909399;
-    margin-left: 24px;
-    margin-top: 2px;
+.radio-item input[type="radio"] {
+    margin-top: 3px;
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
-.current-source {
-    margin-top: 8px;
-    font-size: 14px;
+.radio-label {
     color: #606266;
+    font-size: 16px;
+}
+
+.source-desc {
+    color: #909399;
+    font-size: 13px;
 }
 </style>
