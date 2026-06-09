@@ -617,12 +617,9 @@ function initIpcHandlers() {
         try {
             const source = await getUpdateSource();
             const stats = await getSourceSuccessRates();
-            const manager = getAutoUpdater();
-            const sourceInfo = await manager.getSourceInfo();
             return {
                 success: true,
                 source,
-                currentSource: sourceInfo.currentSource,
                 stats
             };
         } catch (error) {
