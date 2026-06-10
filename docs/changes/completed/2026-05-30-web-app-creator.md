@@ -109,7 +109,7 @@
 | 修改 | `childprocessEntry.js` | setupExternalUrlHandler 增加 isWebApp 参数 |
 | 修改 | `modules/integrated/appWindowManager.js` | 调用 setupExternalUrlHandler 时传入 isWebApp，加载 web-app-navigator |
 | 修改 | `modules/main/appManager.js` | getAppInfo 中 WebApp 跳过 README/HISTORY 检查 |
-| 修改 | `modules/main/shortcutManager.js` | 快捷方式命名支持 alias |
+| 修改 | `modules/main/appLauncherManager.js` | 快捷方式命名支持 alias |
 | 修改 | `locales/zh-CN.json` | 新增国际化文案 |
 | 修改 | `locales/en-US.json` | 新增国际化文案 |
 

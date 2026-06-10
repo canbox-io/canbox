@@ -7,7 +7,7 @@ const { getAppPath, getAppDataPath } = require('@modules/canbox/main/pathManager
 const { handleError } = require('@modules/canbox/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
 const { handleImportApp, getAppInfo, getAppDevInfo } = require('@modules/canbox/main/appManager');
-const { deleteShortcuts } = require('@modules/canbox/main/shortcutManager');
+const { deleteLaunchers } = require('@modules/canbox/main/appLauncherManager');
 const { syncReposDownloadStatus } = require('@modules/canbox/ipc/repoIpcHandler');
 const i18nModule = require('../../../locales');
 const { getCanboxStore } = require('@modules/canbox/main/storageManager');
@@ -383,7 +383,7 @@ class AppManagerIpcHandler {
 
                     // 删除快捷方式（仅生产环境应用）
                     try {
-                        const result = deleteShortcuts({ [id]: appItem });
+                        const result = deleteLaunchers({ [id]: appItem });
                         if (result.success) {
                             logger.info(`应用快捷方式已删除: ${id}`);
                         } else {

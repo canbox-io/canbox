@@ -4,7 +4,7 @@ const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
 const repoIpcHandler = require('./modules/canbox/ipc/repoIpcHandler');
-const shortcutIpcHandler = require('./modules/canbox/ipc/shortcutIpcHandler');
+const appLauncherIpcHandler = require('./modules/canbox/ipc/appLauncherIpcHandler');
 const appManagerIpcHandler = require('./modules/canbox/ipc/appManagerIpcHandler');
 const initApiIpcHandlers = require('./modules/app/api');
 const logger = require('./modules/utils/logger');
@@ -191,7 +191,7 @@ function initIpcHandlers() {
 
     // 初始化 IPC 处理器
     repoIpcHandler.init(ipcMain);
-    shortcutIpcHandler.init(ipcMain);
+    appLauncherIpcHandler.init(ipcMain);
     appManagerIpcHandler.init(ipcMain);
 
     // 初始化 API 相关的 IPC 处理逻辑

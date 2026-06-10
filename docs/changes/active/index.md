@@ -6,13 +6,13 @@ related_changes: []
 
 # 进行中的变更
 
-> 最后更新：2026-06-09
+> 最后更新：2026-06-10
 
 ## 📊 统计
 
 | 项目 | 数量 |
 |------|------|
-| 进行中变更 | 1 |
+| 进行中变更 | 2 |
 
 ---
 
@@ -21,6 +21,7 @@ related_changes: []
 | 变更名称 | 日期 | 优先级 | 描述 |
 |----------|------|--------|------|
 | [refactor-module-structure](./refactor-module-structure.md) | 2026-06-09 | ⭐⭐⭐ | 重构 modules/ 目录，按运行环境拆分为 canbox/app/utils 三层结构 |
+| [rename-shortcut-to-app-launcher](./rename-shortcut-to-app-launcher.md) | 2026-06-10 | ⭐⭐⭐ | 重命名 shortcutManager → appLauncherManager，消除 shortcut 歧义 |
 
 ---
 

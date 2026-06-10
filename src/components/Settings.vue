@@ -85,15 +85,15 @@
             <div class="setting-item">
                 <label class="setting-label">
                     <span class="setting-icon">🔗</span>
-                    {{ $t('settings.shortcutTitle') }}
+                    {{ $t('settings.launcherTitle') }}
                 </label>
                 <div class="setting-control">
                     <div class="button-group">
-                        <el-button type="primary" @click="generateShortcut">
-                            {{ $t('settings.createShortcut') }}
+                        <el-button type="primary" @click="generateLaunchers">
+                            {{ $t('settings.createLauncher') }}
                         </el-button>
-                        <el-button type="danger" @click="deleteShortcut">
-                            {{ $t('settings.deleteShortcut') }}
+                        <el-button type="danger" @click="deleteLaunchers">
+                            {{ $t('settings.deleteLauncher') }}
                         </el-button>
                     </div>
                 </div>
@@ -350,20 +350,20 @@ const formatLastCheckTime = computed(() => {
     });
 });
 
-function generateShortcut() {
-    window.api.generateShortcut(ret => {
+function generateLaunchers() {
+    window.api.generateLaunchers(ret => {
         if (ret.success) {
-            notification.success(t('settings.shortcutCreated'));
+            notification.success(t('settings.launcherCreated'));
         } else {
             notification.error(ret.msg);
         }
     });
 }
 
-function deleteShortcut() {
-    window.api.deleteShortcut(ret => {
+function deleteLaunchers() {
+    window.api.deleteLaunchers(ret => {
         if (ret.success) {
-            notification.success(t('settings.shortcutDeleted'));
+            notification.success(t('settings.launcherDeleted'));
         } else {
             notification.error(ret.msg);
         }

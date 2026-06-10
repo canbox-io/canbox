@@ -19,9 +19,9 @@ const { handleError } = require('@modules/canbox/ipc/errorHandler');
  * @param {Object} appsData - 所有应用
  * @returns {Object} - 操作结果
  */
-async function generateShortcuts(appsData) {
+async function generateLaunchers(appsData) {
     if (!appsData || Object.keys(appsData).length === 0) {
-        return handleError('应用信息为空', 'generateShortcuts');
+        return handleError('应用信息为空', 'generateLaunchers');
     }
 
     const execPath = process.env.APPIMAGE || process.execPath;
@@ -32,7 +32,7 @@ async function generateShortcuts(appsData) {
             const appName = (appItem.alias && hasNonAscii)
                 ? `canbox-${appItem.name} (${appItem.alias})`
                 : 'canbox-' + appItem.name;
-            let shortcutPath, command;
+            let launcherPath, command;
 
             // 确保图标缓存目录存在
             if (!fs.existsSync(getAppIconPath())) {
@@ -60,7 +60,7 @@ async function generateShortcuts(appsData) {
 
             if (process.platform === 'win32') {
                 const programsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs');
-                shortcutPath = path.join(programsPath, `${appName}.lnk`);
+                launcherPath = path.join(programsPath, `${appName}.lnk`);
                 const targetPath = execPath;
                 const arguments = '--no-sandbox --app-id=' + uid;
 
@@ -72,14 +72,14 @@ async function generateShortcuts(appsData) {
                 // 使用转义后的路径创建快捷方式，确保图标路径正确
                 command = `powershell -Command `
                     + `"$ws = New-Object -ComObject WScript.Shell; `
-                    + `$s = $ws.CreateShortcut('${shortcutPath.replace(/\\/g, '\\\\')}'); `
+                    + `$s = $ws.CreateShortcut('${launcherPath.replace(/\\/g, '\\\\')}'); `
                     + `$s.TargetPath = '${targetPath.replace(/\\/g, '\\\\')}'; `
                     + `$s.Arguments = '${arguments}'; `
                     + `$s.IconLocation = '${iconPath.replace(/\\/g, '\\\\')},0'; `
                     + `$s.Save()"`;
                 execSync(command);
             } else if (process.platform === 'darwin') {
-                shortcutPath = path.join('/Applications', `${appName}.app`);
+                launcherPath = path.join('/Applications', `${appName}.app`);
                 const targetPath = `"${execPath}" --no-sandbox --app-id=${uid}`;
                 command = `osascript -e 'tell application "Finder" to make alias file to POSIX file "${targetPath}" at POSIX file "/Applications"'`;
                 execSync(command);
@@ -88,7 +88,7 @@ async function generateShortcuts(appsData) {
                 if (!fs.existsSync(applicationsPath)) {
                     fs.mkdirSync(applicationsPath, { recursive: true });
                 }
-                shortcutPath = path.join(applicationsPath, `${appName}.desktop`);
+                launcherPath = path.join(applicationsPath, `${appName}.desktop`);
 
                 const desktopFile = `[Desktop Entry]
 Name=${appName}
@@ -98,7 +98,7 @@ Icon=${iconPath}
 Type=Application
 StartupWMClass=${uid}
 `;
-                fs.writeFileSync(shortcutPath, desktopFile);
+                fs.writeFileSync(launcherPath, desktopFile);
             }
         }
         return { success: true };
@@ -113,9 +113,9 @@ StartupWMClass=${uid}
  * @param {Object} appsData - 所有应用
  * @returns {Object} - 操作结果
  */
-function deleteShortcuts(appsData) {
+function deleteLaunchers(appsData) {
     if (!appsData || Object.keys(appsData).length === 0) {
-        return handleError('应用信息为空', 'deleteShortcuts');
+        return handleError('应用信息为空', 'deleteLaunchers');
     }
 
     try {
@@ -124,19 +124,19 @@ function deleteShortcuts(appsData) {
             const appName = (appItem.alias && hasNonAscii)
                 ? `canbox-${appItem.name} (${appItem.alias})`
                 : 'canbox-' + appItem.name;
-            let shortcutPath;
+            let launcherPath;
 
             if (process.platform === 'win32') {
                 const programsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs');
-                shortcutPath = path.join(programsPath, `${appName}.lnk`);
+                launcherPath = path.join(programsPath, `${appName}.lnk`);
             } else if (process.platform === 'darwin') {
-                shortcutPath = path.join('/Applications', `${appName}.app`);
+                launcherPath = path.join('/Applications', `${appName}.app`);
             } else if (process.platform === 'linux') {
-                shortcutPath = path.join(os.homedir(), '.local', 'share', 'applications', `${appName}.desktop`);
+                launcherPath = path.join(os.homedir(), '.local', 'share', 'applications', `${appName}.desktop`);
             }
 
-            if (fs.existsSync(shortcutPath)) {
-                fs.unlinkSync(shortcutPath);
+            if (fs.existsSync(launcherPath)) {
+                fs.unlinkSync(launcherPath);
             }
             
             // 删除缓存的图标文件
@@ -170,7 +170,7 @@ function deleteShortcuts(appsData) {
  * 
  * @returns {boolean} - true：需要，false：不需要
  */
-const needRegenerateShortcuts = () => {
+const needRegenerateLaunchers = () => {
 
     // 检查是否存在 canbox-*.desktop 文件
     if (process.platform === 'linux') {
@@ -197,19 +197,19 @@ const markVersion = (currentVersion) => {
  * @param {Object} appsData - 应用数据
  * @returns {Promise<Object>} - 操作结果
  */
-async function initShortcuts(currentVersion, appsData) {
+async function initLaunchers(currentVersion, appsData) {
     // 存储的版本
     const savedVersion = getCanboxStore().get('version');
     // if (savedVersion === currentVersion) {
-    //     return { success: true, msg: '不需要更新shortcuts' };
+    //     return { success: true, msg: '不需要更新launchers' };
     // }
     // 版本差异标识，true-版本有差异，false-版本无差异
     let versionDiffFlag = savedVersion !== currentVersion;
     try {
 
         // 初始化应用快捷方式
-        if (versionDiffFlag && needRegenerateShortcuts(currentVersion) && appsData) {
-            const result = await generateShortcuts(appsData);
+        if (versionDiffFlag && needRegenerateLaunchers(currentVersion) && appsData) {
+            const result = await generateLaunchers(appsData);
         }
 
         // 初始化 Canbox desktop 文件（Linux AppImage）
@@ -222,9 +222,9 @@ async function initShortcuts(currentVersion, appsData) {
         // 更新存储的版本号标记
         markVersion(currentVersion);
 
-        return { success: true, msg: '不需要更新shortcuts' };
+        return { success: true, msg: '不需要更新launchers' };
     } catch (error) {
-        return handleError(new Error('初始化快捷方式失败' + error.message), 'initShortcuts');
+        return handleError(new Error('初始化快捷方式失败' + error.message), 'initLaunchers');
     }
 }
 
@@ -235,7 +235,7 @@ async function initShortcuts(currentVersion, appsData) {
 function createCanboxDesktop() {
     const appImagePath = process.env.APPIMAGE;
     if (!appImagePath) {
-        logger.warn('[shortcutManager.js] 未检测到 AppImage 环境，跳过创建 desktop 文件 / AppImage environment not detected, skipping desktop file creation');
+        logger.warn('[appLauncherManager.js] 未检测到 AppImage 环境，跳过创建 desktop 文件 / AppImage environment not detected, skipping desktop file creation');
         return;
     }
 
@@ -247,7 +247,7 @@ function createCanboxDesktop() {
         fs.mkdirSync(applicationsPath, { recursive: true });
     }
 
-    logger.info('[shortcutManager.js] appImagePath: {}', appImagePath);
+    logger.info('[appLauncherManager.js] appImagePath: {}', appImagePath);
 
     // 获取 AppImage 所在目录和文件名
     const appImageDir = path.dirname(appImagePath);
@@ -307,7 +307,7 @@ function needGenerateCanboxDesktop() {
 }
 
 module.exports = {
-    generateShortcuts,
-    deleteShortcuts,
-    initShortcuts
+    generateLaunchers,
+    deleteLaunchers,
+    initLaunchers
 };

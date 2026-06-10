@@ -221,12 +221,12 @@ if (!getTheLock) {
             logger.error('启动时仓库检查失败:', error);
         });
 
-        // 初始化快捷方式（异步）
+        // 初始化启动器（异步）
         if (!isDev) {
-            const shortcutManager = require('./modules/canbox/main/shortcutManager');
+            const appLauncherManager = require('./modules/canbox/main/appLauncherManager');
             const { getAllApps } = require('./modules/canbox/main/appManager');
             const package = require('./package.json');
-            shortcutManager.initShortcuts(package.version, getAllApps().data || {}).then((result) => {
+            appLauncherManager.initLaunchers(package.version, getAllApps().data || {}).then((result) => {
                 if (result.success) {
                     logger.info('快捷方式初始化完成' + result.msg || '');
                 } else {

@@ -60,16 +60,16 @@ contextBridge.exposeInMainWorld(
         send: (eventName, ...args) => {
             ipcRenderer.send(eventName, ...args);
         },
-        generateShortcut: (fn) => {
-            ipcRenderer.invoke('generate-shortcut').then(result => {
+        generateLaunchers: (fn) => {
+            ipcRenderer.invoke('generate-launchers').then(result => {
                 fn(result);
             }).catch(error => {
                 console.error('IPC call failed:', error);
                 fn({ success: false, msg: error.message });
             });
         },
-        deleteShortcut: (fn) => {
-            ipcRenderer.invoke('delete-shortcut').then(result => {
+        deleteLaunchers: (fn) => {
+            ipcRenderer.invoke('delete-launchers').then(result => {
                 fn(result);
             }).catch(error => {
                 console.error('IPC call failed:', error);

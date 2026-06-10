@@ -63,7 +63,7 @@ Canbox项目中存在日志记录不一致的问题：
 - modules/ipc/repoIpcHandler.js (替换console为logger)
 - modules/core/win.js (替换console为logger)
 - modules/app.api.js (替换console为logger)
-- modules/main/shortcutManager.js (替换console为logger)
+- modules/main/appLauncherManager.js (替换console为logger)
 - 其他约10个modules目录下的文件
 ```
 
