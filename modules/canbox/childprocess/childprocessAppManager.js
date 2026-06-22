@@ -82,15 +82,14 @@ class ChildprocessAppManager {
     }
 
     /**
-     * 聚焦应用
+     * 聚焦应用（通过 IPC 通道通知子进程 show+focus 窗口）
      * @param {string} uid - App ID
      */
     focusApp(uid) {
         const child = processManager.getProcess(uid);
         if (child) {
             logger.info(`Focusing app ${uid} in childprocess mode`);
-            // 子进程模式下，聚焦需要通过跨进程通信实现
-            // 这里先留空，后续在 processBridge 中实现
+            child.send({ action: 'focus-window' });
         }
     }
 

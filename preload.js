@@ -255,6 +255,13 @@ contextBridge.exposeInMainWorld(
                 ipcRenderer.on('zoom-changed', (event, factor) => callback(factor));
             }
         },
+        shortcutManager: {
+            getAll: () => ipcRenderer.invoke('shortcut-list'),
+            unregister: (accelerator) => ipcRenderer.invoke('shortcut-force-unregister', accelerator),
+            onChanged: (callback) => {
+                ipcRenderer.on('shortcuts-changed', (event, list) => callback(list));
+            }
+        },
         menu: {
             getLast: () => ipcRenderer.invoke('menu-get-last'),
             setLast: (menuName) => ipcRenderer.invoke('menu-set-last', menuName)

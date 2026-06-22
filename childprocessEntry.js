@@ -114,6 +114,19 @@ process.on('uncaughtException', (error) => {
     logger.error('[childprocessEntry] Uncaught exception:', error);
 });
 
+// 监听父进程通过 IPC 通道发送的消息（如快捷键触发的聚焦指令）
+process.on('message', (msg) => {
+    if (msg && msg.action === 'focus-window') {
+        logger.info(`[${appId}] Received focus-window from parent`);
+        BrowserWindow.getAllWindows().forEach(win => {
+            if (!win.isDestroyed()) {
+                win.show();
+                win.focus();
+            }
+        });
+    }
+});
+
 /**
  * 获取根域名（hostname 的最后两段）
  * 用于判断同域名不同子域名的导航（如 www.douyin.com → live.douyin.com）

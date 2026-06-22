@@ -1,7 +1,0 @@
-{
-  "folders": [
-    { "name": "canbox", "path": "." },
-    { "name": "canbox-pages", "path": "../canbox-pages" }
-  ],
-  "settings": {}
-}

@@ -5,17 +5,20 @@ declare global {
         canbox: {
             /**
              * 钩子对象，用于存储全局状态
+             * @platforms linux, windows
              */
             hooks: Record<string, any>;
 
             /**
              * 示例方法
+             * @platforms linux, windows
              */
             hello: () => void;
 
             /**
              * 数据库操作模块
              * 基于 PouchDB，提供本地数据持久化能力
+             * @platforms linux, windows
              */
             db: {
                 /**
@@ -93,6 +96,7 @@ declare global {
 
             /**
              * 窗口操作模块
+             * @platforms linux, windows
              */
             win: {
                 /**
@@ -120,6 +124,7 @@ declare global {
             /**
              * 提权执行模块
              * 提供跨平台的提权执行命令功能
+             * @platforms linux, windows
              */
             sudo: {
                 /**
@@ -140,6 +145,7 @@ declare global {
             /**
              * 对话框模块
              * 直接封装 Electron 的 dialog 模块，请求参数和应答均可参见 Electron dialog 文档
+             * @platforms linux, windows
              */
             dialog: {
                 /**
@@ -170,6 +176,7 @@ declare global {
             /**
              * 本地存储模块
              * 使用 electron-store 进行数据存储，每个 name 对应一个独立的 .json 文件
+             * @platforms linux, windows
              */
             store: {
                 /**
@@ -208,6 +215,7 @@ declare global {
             /**
              * 注册窗口关闭时的回调函数
              * @param callback - 窗口关闭时执行的回调函数
+             * @platforms linux, windows
              */
             registerCloseCallback: (callback: () => void) => void;
 
@@ -215,6 +223,7 @@ declare global {
              * 获取 canbox 当前语言设置
              * 支持 Window 模式和 Childprocess 模式
              * @returns string - 当前语言代码，如 'zh-CN' 或 'en-US'
+             * @platforms linux, windows
              * @example
              * const locale = canbox.getLocale();
              * console.log(locale); // 'zh-CN'
@@ -225,12 +234,109 @@ declare global {
              * 使用默认浏览器打开外部 URL
              * @param url - 要打开的 URL 地址
              * @returns Promise<void>
+             * @platforms linux, windows
              * @example
              * canbox.openUrl('https://example.com')
              *   .then(() => console.log('opened'))
              *   .catch(err => console.error(err));
              */
             openUrl: (url: string) => Promise<void>;
+
+            /**
+             * 窗口控制模块
+             * 提供当前 APP 窗口的隐藏/显示能力
+             * @platforms linux, windows
+             */
+            windowControl: {
+                /**
+                 * 隐藏当前 APP 窗口
+                 * @returns Promise<{ success: boolean; msg?: string }>
+                 * @example
+                 * canbox.windowControl.hide()
+                 *     .then(() => console.log('hidden'))
+                 *     .catch(err => console.error(err));
+                 */
+                hide: () => Promise<{ success: boolean; msg?: string }>;
+
+                /**
+                 * 显示并聚焦当前 APP 窗口
+                 * @returns Promise<{ success: boolean; msg?: string }>
+                 * @example
+                 * canbox.windowControl.show()
+                 *     .then(() => console.log('shown'))
+                 *     .catch(err => console.error(err));
+                 */
+                show: () => Promise<{ success: boolean; msg?: string }>;
+            };
+
+            /**
+             * 全局快捷键模块
+             * 提供系统级全局快捷键的注册/注销能力
+             * @platforms linux (x11)
+             */
+            shortcut: {
+                /**
+                 * 注册全局快捷键
+                 * 映射关系会持久化到 canbox.json，Canbox 重启后自动恢复。
+                 * APP 每次启动只需调用 onTriggered() 设置事件监听即可。
+                 * @param accelerator - Electron accelerator 字符串，如 'Alt+Space'、'CommandOrControl+X'
+                 * @param options - 可选配置
+                 * @param options.mode - 触发模式：'focus'（聚焦/启动 APP 窗口，默认）或 'callback'（IPC 事件通知）
+                 * @returns Promise 返回注册结果
+                 * @returns success: true 表示注册成功
+                 * @returns success: false + reason: 'occupied' 表示快捷键已被其他 APP 占用，occupiedBy 为占用者名称
+                 * @returns success: false + reason: 'system-occupied' 表示快捷键被系统或其他应用占用
+                 * 
+                 * @example
+                 * // 聚焦模式
+                 * canbox.shortcut.register('Alt+Space', { mode: 'focus' })
+                 *     .then(result => console.info(result));
+                 * 
+                 * // 事件模式
+                 * canbox.shortcut.register('Alt+X', { mode: 'callback' })
+                 *     .then(result => console.info(result));
+                 * 
+                 * // 检查冲突
+                 * canbox.shortcut.register('Alt+Space')
+                 *     .then(result => {
+                 *         if (!result.success && result.reason === 'occupied') {
+                 *             console.warn('快捷键已被 ' + result.occupiedBy + ' 占用');
+                 *         }
+                 *     });
+                 */
+                register: (accelerator: string, options?: { mode?: 'focus' | 'callback' }) => Promise<{
+                    success: boolean;
+                    reason?: 'occupied' | 'system-occupied';
+                    occupiedBy?: string;
+                }>;
+
+                /**
+                 * 注销全局快捷键
+                 * @param accelerator - Electron accelerator 字符串
+                 * @returns Promise<{ success: boolean }>
+                 */
+                unregister: (accelerator: string) => Promise<{ success: boolean }>;
+
+                /**
+                 * 检查快捷键是否已注册
+                 * @param accelerator - Electron accelerator 字符串
+                 * @returns Promise<boolean>
+                 */
+                isRegistered: (accelerator: string) => Promise<boolean>;
+
+                /**
+                 * 监听快捷键触发事件（callback 模式）
+                 * 注册的回调在快捷键被按下时触发，参数为 accelerator 字符串
+                 * @param callback - 触发时的回调函数
+                 * 
+                 * @example
+                 * canbox.shortcut.onTriggered((accelerator) => {
+                 *     console.log('快捷键触发:', accelerator);
+                 *     // 执行自定义逻辑，例如截图、语音输入等
+                 * });
+                 */
+                onTriggered: (callback: (accelerator: string) => void) => void;
+            };
         };
     }
 

@@ -2,6 +2,8 @@
 
 # store
 
+**支持平台**: linux, windows
+
 使用 electron-store 进行数据存储
 
 **存储位置**：`{userData}/Users/data/{appId}/store/{name}.json`
@@ -88,6 +90,8 @@ canbox.store.clear('config')
 - `cache.json` - 缓存数据
 
 # db
+
+**支持平台**: linux, windows
 
 canbox 使用 [pouchdb](https://pouchdb.com/) 作为本地存储库
 
@@ -578,6 +582,8 @@ canbox.db.createIndex({
 
 # window
 
+**支持平台**: linux, windows
+
 ## canbox.win.createWindow(options, params)
 
 - 参数
@@ -616,6 +622,8 @@ canbox.win.notification(options)
 ```
 
 # sudo
+
+**支持平台**: linux, windows
 
 提供跨平台的提权执行命令功能，支持 Linux、macOS 和 Windows。
 
@@ -690,6 +698,8 @@ canbox.sudo.exec({
 
 # dialog
 
+**支持平台**: linux, windows
+
 直接的封装，没有做任何修建，请求参数和应答均可参见electron的 [`dialog`](https://www.electronjs.org/zh/docs/latest/api/dialog) 模块
 
 ## showOpenDialog
@@ -712,6 +722,8 @@ canbox.sudo.exec({
 
 # 生命周期
 
+**支持平台**: linux, windows
+
 ## registerCloseCallback
 
 注册窗口关闭时APP的回调函数
@@ -726,3 +738,142 @@ canbox.registerCloseCallback(() => {
 });
 
 ```
+
+# globalShortcut
+
+**支持平台**: linux (x11)
+
+提供系统级全局快捷键的注册/注销能力。快捷键映射关系会持久化到 `canbox.json`，Canbox 重启后自动恢复。APP 开发者每次启动只需调用 `onTriggered()` 设置事件监听即可。
+
+两种触发模式：
+- **`focus`**（默认）：快捷键按下时聚焦或启动 APP 窗口。适用于快速启动类 APP。
+- **`callback`**：快捷键按下时通过 IPC 事件通知 APP 渲染进程。适用于工具类 APP（截图、语音输入等）。
+
+## canbox.shortcut.register(accelerator, options?)
+
+注册全局快捷键。
+
+- 参数
+  1. `string` accelerator - Electron accelerator 字符串，如 `'Alt+Space'`、`'CommandOrControl+X'`
+  2. `object` [options] - 可选配置
+     - `mode` `'focus' | 'callback'` - 触发模式（默认 `'focus'`）
+- 应答 `Promise<object>` - 注册结果
+  - `success: true` - 注册成功
+  - `success: false` + `reason: 'occupied'` - 快捷键已被其他 APP 占用，`occupiedBy` 为占用者名称
+  - `success: false` + `reason: 'system-occupied'` - 快捷键被系统或其他应用占用
+
+```javascript
+// 聚焦模式（默认）
+canbox.shortcut.register('Alt+Space', { mode: 'focus' })
+    .then(result => {
+        console.info('注册结果:', result);
+    });
+
+// 事件回调模式
+canbox.shortcut.register('Alt+X', { mode: 'callback' })
+    .then(result => {
+        console.info('注册结果:', result);
+    });
+
+// 冲突检测
+canbox.shortcut.register('Alt+Space')
+    .then(result => {
+        if (!result.success && result.reason === 'occupied') {
+            console.warn('快捷键已被 ' + result.occupiedBy + ' 占用');
+        }
+    });
+```
+
+**注意**：快捷键映射关系是持久化的。注册一次后，即使 Canbox 重启，快捷键仍然有效。只需每次 APP 启动时设置 `onTriggered` 监听即可。
+
+## canbox.shortcut.unregister(accelerator)
+
+注销全局快捷键。
+
+- 参数
+  1. `string` accelerator - Electron accelerator 字符串
+- 应答 `Promise<object>`
+  - `success: true` - 注销成功
+
+```javascript
+canbox.shortcut.unregister('Alt+Space')
+    .then(result => {
+        console.info('快捷键已注销:', result);
+    });
+```
+
+## canbox.shortcut.isRegistered(accelerator)
+
+检查快捷键是否已注册。
+
+- 参数
+  1. `string` accelerator - Electron accelerator 字符串
+- 应答 `Promise<boolean>` - 是否已注册
+
+```javascript
+canbox.shortcut.isRegistered('Alt+Space')
+    .then(registered => {
+        console.info('快捷键是否已注册:', registered);
+    });
+```
+
+## canbox.shortcut.onTriggered(callback)
+
+监听快捷键触发事件（callback 模式）。
+
+- 参数
+  1. `function` callback - 快捷键触发时的回调函数，参数为 accelerator 字符串
+
+```javascript
+// 以 callback 模式注册快捷键
+canbox.shortcut.register('Alt+X', { mode: 'callback' })
+    .then(() => {
+        // 设置事件监听
+        canbox.shortcut.onTriggered((accelerator) => {
+            console.log('快捷键触发:', accelerator);
+            // 执行自定义逻辑，例如截图、语音输入等
+        });
+    });
+```
+
+**注意**：`onTriggered` 应在 APP 启动时调用以重新设置监听（回调不持久化，只有 accelerator → appId 映射会持久化）。
+
+# windowControl
+
+**支持平台**: linux, windows
+
+提供当前 APP 窗口的隐藏/显示能力。常用于快速启动类 APP（如 launcher），实现 ESC 隐藏窗口、全局快捷键唤起窗口。
+
+## canbox.windowControl.hide()
+
+隐藏当前 APP 窗口。
+
+- 应答 `Promise<object>` — 成功时返回 `{ success: true }`
+
+```javascript
+canbox.windowControl.hide()
+    .then(() => {
+        console.info('窗口已隐藏');
+    })
+    .catch(error => {
+        console.error('隐藏窗口失败:', error);
+    });
+```
+
+## canbox.windowControl.show()
+
+显示并聚焦当前 APP 窗口。
+
+- 应答 `Promise<object>` — 成功时返回 `{ success: true }`
+
+```javascript
+canbox.windowControl.show()
+    .then(() => {
+        console.info('窗口已显示并聚焦');
+    })
+    .catch(error => {
+        console.error('显示窗口失败:', error);
+    });
+```
+
+**注意**：`hide()` 和 `show()` 均通过 `ipcRenderer.invoke` 调用主进程的 `app-window-control` handler，`appId` 自动从 `window.appId` 获取。

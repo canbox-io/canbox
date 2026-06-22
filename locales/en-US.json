@@ -107,7 +107,12 @@
         "noFilesToCleanup": "No log files to cleanup",
         "retentionDaysError": "Retention days must be between 0-30",
         "retentionDaysSaved": "Retention days saved",
-        "retentionDaysSaveFailed": "Failed to save retention days"
+        "retentionDaysSaveFailed": "Failed to save retention days",
+        "shortcutGroup": "Global Shortcuts",
+        "shortcutEmpty": "No global shortcuts registered",
+        "shortcutDelete": "Delete",
+        "shortcutUnregisterSuccess": "Shortcut unregistered",
+        "shortcutUnregisterFailed": "Unregister failed"
     },
     "canbox": {
         "myApps": "My Apps",

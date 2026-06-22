@@ -60,9 +60,9 @@ class ProcessManager {
 
             logger.info(`Starting subprocess for ${uid}: ${electronPath} ${args.join(' ')}`);
 
-            // 启动子进程
+            // 启动子进程（IPC 通道用于父进程向子进程推送消息，如窗口聚焦）
             const child = spawn(electronPath, args, {
-                stdio: ['ignore', 'pipe', 'pipe'],
+                stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
                 detached: false,
                 env: {
                     ...process.env,

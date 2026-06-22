@@ -100,6 +100,31 @@
             </div>
         </div>
 
+        <!-- 全局快捷键 -->
+        <div class="settings-group">
+            <div class="group-title">
+                <span class="group-icon">⌨️</span>
+                <span>{{ $t('settings.shortcutGroup') }}</span>
+            </div>
+
+            <!-- 空状态 -->
+            <div v-if="shortcutStore.shortcutList.length === 0" class="shortcut-empty">
+                {{ $t('settings.shortcutEmpty') }}
+            </div>
+
+            <!-- 快捷键列表 -->
+            <div class="setting-item full-width" v-for="item in shortcutStore.shortcutList" :key="item.accelerator">
+                <div class="shortcut-row">
+                    <el-tag type="primary" size="large" class="accelerator-tag">{{ item.accelerator }}</el-tag>
+                    <span class="shortcut-app-name">{{ item.appName }}</span>
+                    <span class="shortcut-time">{{ formatTime(item.registeredAt) }}</span>
+                    <el-button type="danger" size="small" @click="handleUnregisterShortcut(item.accelerator)">
+                        {{ $t('settings.shortcutDelete') }}
+                    </el-button>
+                </div>
+            </div>
+        </div>
+
         <!-- 数据路径 -->
         <div class="settings-group">
             <div class="group-title">
@@ -270,10 +295,12 @@ import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
 import { useUpdateStore } from '@/stores/updateStore';
 import { useZoomStore } from '@/stores/zoomStore';
+import { useShortcutStore } from '@/stores/shortcutStore';
 
 const { t, locale } = useI18n();
 const updateStore = useUpdateStore();
 const zoomStore = useZoomStore();
+const shortcutStore = useShortcutStore();
 
 const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
@@ -594,6 +621,37 @@ async function handleAutostartChange(enabled) {
     }
 }
 
+/**
+ * 格式化 ISO 8601 时间为本地时区显示字符串
+ * @param {string} isoString - ISO 8601 时间戳
+ * @returns {string}
+ */
+function formatTime(isoString) {
+    if (!isoString) return '-';
+    return new Date(isoString).toLocaleString(
+        locale.value === 'zh-CN' ? 'zh-CN' : 'en-US',
+        {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }
+    );
+}
+
+async function handleUnregisterShortcut(accelerator) {
+    const result = await shortcutStore.unregister(accelerator);
+    if (result && result.success !== false) {
+        notification.success(t('settings.shortcutUnregisterSuccess'));
+        await shortcutStore.fetchAll();
+    } else {
+        notification.error(t('settings.shortcutUnregisterFailed'));
+    }
+}
+
 async function loadUpdateSource() {
     try {
         const result = await window.api.updateSource.get();
@@ -673,6 +731,9 @@ async function loadSettings() {
     if (autostartResult.success) {
         autostartEnabled.value = autostartResult.enabled;
     }
+
+    // 初始化 shortcutStore
+    shortcutStore.init();
 }
 
 onMounted(() => {
@@ -925,5 +986,41 @@ onUnmounted(() => {
 .source-desc {
     color: #909399;
     font-size: 13px;
+}
+
+/* 全局快捷键管理 */
+.shortcut-empty {
+    color: #909399;
+    font-size: 16px;
+    padding: 16px 0;
+    text-align: center;
+}
+
+.shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    width: 100%;
+}
+
+.accelerator-tag {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.shortcut-app-name {
+    font-size: 16px;
+    color: #303133;
+    flex: 1;
+    min-width: 0;
+}
+
+.shortcut-time {
+    font-size: 14px;
+    color: #909399;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 </style>

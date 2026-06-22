@@ -108,7 +108,12 @@
         "noFilesToCleanup": "没有需要清理的日志文件",
         "retentionDaysError": "保留天数必须在 0-30 之间",
         "retentionDaysSaved": "保留天数已保存",
-        "retentionDaysSaveFailed": "保存保留天数失败"
+        "retentionDaysSaveFailed": "保存保留天数失败",
+        "shortcutGroup": "全局快捷键",
+        "shortcutEmpty": "暂无注册的全局快捷键",
+        "shortcutDelete": "删除",
+        "shortcutUnregisterSuccess": "快捷键已注销",
+        "shortcutUnregisterFailed": "注销失败"
     },
     "canbox": {
         "myApps": "我的 APP",

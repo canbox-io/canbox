@@ -186,6 +186,10 @@ if (!getTheLock) {
         // 初始化执行调度器
         executionDispatcher.init();
 
+        // 恢复持久化的全局快捷键
+        const GlobalShortcutManager = require('@modules/canbox/main/globalShortcutManager');
+        GlobalShortcutManager.getInstance().restoreAll();
+
         // 主进程模式：创建主窗口
         createWindow();
         win.setIcon(path.join(__dirname, './logo.png'));
@@ -295,6 +299,10 @@ app.on('before-quit', () => {
 
     // 停止所有子进程
     executionDispatcher.closeAllApps();
+
+    // 注销所有全局快捷键
+    const GlobalShortcutManager = require('@modules/canbox/main/globalShortcutManager');
+    GlobalShortcutManager.getInstance().unregisterAll();
 
     // 设置强制退出标志，允许窗口真正关闭
     isForceQuit = true;

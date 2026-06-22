@@ -664,6 +664,32 @@ function initIpcHandlers() {
         app.quit();
     });
 
+    // ========== 全局快捷键管理相关 IPC 处理 ==========
+
+    // 获取所有已注册快捷键
+    ipcMain.handle('shortcut-list', async () => {
+        try {
+            const GlobalShortcutManager = require('@modules/canbox/main/globalShortcutManager');
+            const list = GlobalShortcutManager.getInstance().getAll();
+            return { success: true, data: list };
+        } catch (error) {
+            logger.error('Failed to get shortcut list:', error);
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // 强制注销快捷键（管理面板专用）
+    ipcMain.handle('shortcut-force-unregister', async (event, accelerator) => {
+        try {
+            const GlobalShortcutManager = require('@modules/canbox/main/globalShortcutManager');
+            const result = GlobalShortcutManager.getInstance().forceUnregister(accelerator);
+            return { success: true, data: result };
+        } catch (error) {
+            logger.error('Failed to force unregister shortcut:', error);
+            return { success: false, msg: error.message };
+        }
+    });
+
     // ========== 全局缩放功能 ==========
     // 获取当前缩放比例
     ipcMain.handle('zoom-get', () => {

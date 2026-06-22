@@ -202,6 +202,9 @@ class AppWindowManager {
             setupAppZoom(appWin, enableZoom, savedZoom);
             const zoomPersistence = enableZoom ? startZoomPersistence(appWin, uid, winState, savedZoom) : null;
 
+            // 防双重 ready-to-show（Linux frame:false 窗口在 handler 内 show() 会二次触发）
+            let readyShown = false;
+
             // 添加错误处理，监控加载失败的情况
             appWin.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
                 logger.error('[{}] Failed to load: {} - {}', uid, errorCode, errorDescription);
@@ -224,9 +227,16 @@ class AppWindowManager {
 
             // 准备显示事件
             appWin.on('ready-to-show', () => {
+                if (readyShown) {
+                    logger.info('[{}] ready-to-show (ignored, already shown)', uid);
+                    return;
+                }
+                readyShown = true;
                 logger.info('[{}] ready-to-show', uid);
                 if (!state?.isMax) {
                     appWin.show();
+                    // 显式请求键盘焦点：Linux frame:false 窗口 WM 不会自动分配
+                    appWin.focus();
                 }
                 // if (state?.isMax && !appWin.isMaximized()) {
                 //     logger.info('[{}] ready-to-show make appWin maximized', uid);

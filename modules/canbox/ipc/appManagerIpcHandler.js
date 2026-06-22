@@ -394,6 +394,14 @@ class AppManagerIpcHandler {
                     }
                 }
 
+                // 清除该 APP 注册的全局快捷键
+                try {
+                    const GlobalShortcutManager = require('@modules/canbox/main/globalShortcutManager');
+                    GlobalShortcutManager.getInstance().unregisterAllByAppId(id);
+                } catch (error) {
+                    logger.warn('清除全局快捷键失败: {}, {}', id, error);
+                }
+
                 // 从存储中删除
                 delete appsData[id];
                 store.set('default', appsData);

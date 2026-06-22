@@ -435,6 +435,122 @@ contextBridge.exposeInMainWorld('__canboxZoom', {
     getZoomFactor: () => webFrame.getZoomFactor()
 });
 
+// 注册快捷键触发回调
+let __onShortcutTriggered = null;
+
+/**
+ * 注册全局快捷键触发时的回调函数
+ * @param {Function} callback - 快捷键触发时执行的回调函数，参数为 accelerator 字符串
+ */
+const onShortcutTriggered = (callback) => {
+    __onShortcutTriggered = callback;
+};
+
+// 监听主进程发送的快捷键触发事件
+ipcRenderer.on('shortcut-triggered', (event, accelerator) => {
+    if (__onShortcutTriggered) {
+        try {
+            __onShortcutTriggered(accelerator);
+        } catch (e) {
+            console.error('Error executing shortcut callback / 执行快捷键回调错误:', e);
+        }
+    }
+});
+
+const shortcut = {
+    /**
+     * 注册全局快捷键
+     * @param {string} accelerator - Electron accelerator 字符串，如 'Alt+Space'
+     * @param {Object} [options] - 可选配置
+     * @param {string} [options.mode='focus'] - 触发模式：'focus'（聚焦窗口）或 'callback'（事件通知）
+     * @returns {Promise<{success: boolean, reason?: string, occupiedBy?: string}>}
+     * @example
+     * // 聚焦模式
+     * canbox.shortcut.register('Alt+Space', { mode: 'focus' })
+     *     .then(result => console.info(result));
+     *
+     * // 事件模式
+     * canbox.shortcut.register('Alt+X', { mode: 'callback' })
+     *     .then(result => console.info(result));
+     */
+    register: (accelerator, options = {}) => {
+        if (!window.appId) throw new Error('appId is not set');
+        return ipcRenderer.invoke('shortcut-register', {
+            accelerator,
+            options,
+            appId: window.appId
+        });
+    },
+    /**
+     * 注销全局快捷键
+     * @param {string} accelerator - Electron accelerator 字符串
+     * @returns {Promise<{success: boolean}>}
+     */
+    unregister: (accelerator) => {
+        if (!window.appId) throw new Error('appId is not set');
+        return ipcRenderer.invoke('shortcut-unregister', {
+            accelerator,
+            appId: window.appId
+        });
+    },
+    /**
+     * 检查快捷键是否已注册
+     * @param {string} accelerator - Electron accelerator 字符串
+     * @returns {Promise<boolean>}
+     */
+    isRegistered: (accelerator) => {
+        if (!window.appId) throw new Error('appId is not set');
+        return ipcRenderer.invoke('shortcut-isRegistered', {
+            accelerator,
+            appId: window.appId
+        });
+    },
+    /**
+     * 监听快捷键触发事件（callback 模式）
+     * @param {Function} callback - 触发时的回调函数，参数为 accelerator 字符串
+     */
+    onTriggered: (callback) => {
+        __onShortcutTriggered = callback;
+    }
+};
+
+/**
+ * 窗口控制模块
+ * 提供当前 APP 窗口的隐藏/显示能力
+ */
+const windowControl = {
+    /**
+     * 隐藏当前 APP 窗口
+     * @returns {Promise<{success: boolean}>}
+     * @example
+     * canbox.windowControl.hide()
+     *     .then(result => console.log('hidden'))
+     *     .catch(err => console.error(err));
+     */
+    hide: () => {
+        if (!window.appId) throw new Error('appId is not set');
+        return ipcRenderer.invoke('app-window-control', {
+            appId: window.appId,
+            action: 'hide'
+        });
+    },
+    /**
+     * 显示并聚焦当前 APP 窗口
+     * @returns {Promise<{success: boolean}>}
+     * @example
+     * canbox.windowControl.show()
+     *     .then(result => console.log('shown'))
+     *     .catch(err => console.error(err));
+     */
+    show: () => {
+        if (!window.appId) throw new Error('appId is not set');
+        return ipcRenderer.invoke('app-window-control', {
+            appId: window.appId,
+            action: 'show'
+        });
+    }
+};
+
 /**
  * 对 app 暴露的 api
  */
@@ -453,6 +569,8 @@ window.canbox = {
     registerCloseCallback,
     getLocale,
     openUrl,
+    shortcut,
+    windowControl,
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

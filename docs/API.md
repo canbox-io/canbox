@@ -2,6 +2,8 @@
 
 # store
 
+**支持平台**: linux, windows
+
 Uses electron-store for data storage
 
 **Storage location**: `{userData}/Users/data/{appId}/store/{name}.json`
@@ -89,6 +91,8 @@ canbox.store.clear('config')
 - `cache.json` - Cache data
 
 # db
+
+**支持平台**: linux, windows
 
 Canbox uses [pouchdb](https://pouchdb.com/) as the local storage database
 
@@ -580,6 +584,8 @@ canbox.db.createIndex({
 
 # window
 
+**支持平台**: linux, windows
+
 ## canbox.win.createWindow(options, params)
 
 - Parameters
@@ -618,6 +624,8 @@ canbox.win.notification(options)
 ```
 
 # sudo
+
+**支持平台**: linux, windows
 
 Provides cross-platform elevated command execution functionality, supporting Linux, macOS, and Windows.
 
@@ -696,6 +704,8 @@ canbox.sudo.exec({
 
 # dialog
 
+**支持平台**: linux, windows
+
 Direct wrapper without any trimming. Request parameters and responses can refer to Electron's [`dialog`](https://www.electronjs.org/zh/docs/latest/api/dialog) module
 
 ## showOpenDialog
@@ -718,6 +728,8 @@ Consistent with Electron `showMessageBox`
 
 # Lifecycle
 
+**支持平台**: linux, windows
+
 ## registerCloseCallback
 
 Register callback function when window is closing
@@ -732,3 +744,142 @@ canbox.registerCloseCallback(() => {
 });
 
 ```
+
+# globalShortcut
+
+**支持平台**: linux (x11)
+
+Provides system-level global shortcut registration/unregistration capabilities. The shortcut mapping is persisted to `canbox.json` and automatically restored when Canbox restarts. APP developers only need to call `onTriggered()` to set up event listeners on each launch.
+
+Two trigger modes:
+- **`focus`** (default): Focus or launch the APP window when the shortcut is pressed. Suitable for quick-launch apps.
+- **`callback`**: Send an IPC event to the APP renderer process. Suitable for tool-type apps (screenshot, voice input, etc.).
+
+## canbox.shortcut.register(accelerator, options?)
+
+Register a global shortcut.
+
+- Parameters
+  1. `string` accelerator - Electron accelerator string, e.g. `'Alt+Space'`, `'CommandOrControl+X'`
+  2. `object` [options] - Optional configuration
+     - `mode` `'focus' | 'callback'` - Trigger mode (default `'focus'`)
+- Returns `Promise<object>` - Registration result
+  - `success: true` - Registration successful
+  - `success: false` + `reason: 'occupied'` - Shortcut is occupied by another APP, `occupiedBy` contains the app name
+  - `success: false` + `reason: 'system-occupied'` - Shortcut is occupied by the system or another application
+
+```javascript
+// Focus mode (default)
+canbox.shortcut.register('Alt+Space', { mode: 'focus' })
+    .then(result => {
+        console.info('Registration result:', result);
+    });
+
+// Event callback mode
+canbox.shortcut.register('Alt+X', { mode: 'callback' })
+    .then(result => {
+        console.info('Registration result:', result);
+    });
+
+// Conflict detection
+canbox.shortcut.register('Alt+Space')
+    .then(result => {
+        if (!result.success && result.reason === 'occupied') {
+            console.warn('Shortcut is occupied by: ' + result.occupiedBy);
+        }
+    });
+```
+
+**Note**: The shortcut mapping is persisted. After registering once, the shortcut will still work after Canbox restarts. You only need to set up the `onTriggered` listener each time the APP launches.
+
+## canbox.shortcut.unregister(accelerator)
+
+Unregister a global shortcut.
+
+- Parameters
+  1. `string` accelerator - Electron accelerator string
+- Returns `Promise<object>`
+  - `success: true` - Unregistration successful
+
+```javascript
+canbox.shortcut.unregister('Alt+Space')
+    .then(result => {
+        console.info('Shortcut unregistered:', result);
+    });
+```
+
+## canbox.shortcut.isRegistered(accelerator)
+
+Check if a shortcut is already registered.
+
+- Parameters
+  1. `string` accelerator - Electron accelerator string
+- Returns `Promise<boolean>` - Whether the shortcut is registered
+
+```javascript
+canbox.shortcut.isRegistered('Alt+Space')
+    .then(registered => {
+        console.info('Is shortcut registered:', registered);
+    });
+```
+
+## canbox.shortcut.onTriggered(callback)
+
+Listen for shortcut trigger events (callback mode).
+
+- Parameters
+  1. `function` callback - Callback function when the shortcut is triggered, receives `accelerator` string as parameter
+
+```javascript
+// Register a shortcut in callback mode
+canbox.shortcut.register('Alt+X', { mode: 'callback' })
+    .then(() => {
+        // Set up the event listener
+        canbox.shortcut.onTriggered((accelerator) => {
+            console.log('Shortcut triggered:', accelerator);
+            // Execute custom logic, e.g. screenshot, voice input, etc.
+        });
+    });
+```
+
+**Note**: `onTriggered` should be called at APP startup to re-set the listener (callbacks are not persisted, only the accelerator → appId mapping is).
+
+# windowControl
+
+**Supported platforms**: linux, windows
+
+Provides the ability to hide/show the current APP window. Commonly used for quick-launch apps (e.g. launcher) that need ESC to hide and a global shortcut to show.
+
+## canbox.windowControl.hide()
+
+Hide the current APP window.
+
+- Returns `Promise<object>` — `{ success: true }` on success
+
+```javascript
+canbox.windowControl.hide()
+    .then(() => {
+        console.info('Window hidden');
+    })
+    .catch(error => {
+        console.error('Failed to hide window:', error);
+    });
+```
+
+## canbox.windowControl.show()
+
+Show and focus the current APP window.
+
+- Returns `Promise<object>` — `{ success: true }` on success
+
+```javascript
+canbox.windowControl.show()
+    .then(() => {
+        console.info('Window shown and focused');
+    })
+    .catch(error => {
+        console.error('Failed to show window:', error);
+    });
+```
+
+**Note**: Both `hide()` and `show()` use `ipcRenderer.invoke` to call the `app-window-control` handler on the main process. The `appId` is automatically obtained from `window.appId`.

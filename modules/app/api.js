@@ -331,6 +331,99 @@ function initOpenUrlIpcHandlers() {
 }
 
 /**
+ * 初始化全局快捷键相关的 IPC 消息处理逻辑
+ * @description 处理来自 APP 渲染进程的全局快捷键注册/注销请求
+ * @listens ipcMain.handle('shortcut-register')
+ * @listens ipcMain.handle('shortcut-unregister')
+ * @listens ipcMain.handle('shortcut-isRegistered')
+ */
+function initShortcutIpcHandlers() {
+    const GlobalShortcutManager = require('@modules/canbox/main/globalShortcutManager');
+    const instance = GlobalShortcutManager.getInstance();
+
+    ipcMain.handle('shortcut-register', async (event, args) => {
+        try {
+            const result = await instance.register(args.accelerator, args.appId, args.options?.mode || 'focus');
+            return { success: true, data: result };
+        } catch (error) {
+            logger.error('[api.js] shortcut-register failed: {}', error.message);
+            return { success: false, msg: error.message };
+        }
+    });
+
+    ipcMain.handle('shortcut-unregister', async (event, args) => {
+        try {
+            const result = instance.unregister(args.accelerator, args.appId);
+            return { success: true, data: result };
+        } catch (error) {
+            logger.error('[api.js] shortcut-unregister failed: {}', error.message);
+            return { success: false, msg: error.message };
+        }
+    });
+
+    ipcMain.handle('shortcut-isRegistered', async (event, args) => {
+        try {
+            const result = instance.isRegistered(args.accelerator, args.appId);
+            return { success: true, data: result };
+        } catch (error) {
+            logger.error('[api.js] shortcut-isRegistered failed: {}', error.message);
+            return { success: false, msg: error.message };
+        }
+    });
+}
+
+/**
+ * 初始化窗口控制相关的 IPC 消息处理逻辑
+ * @description 处理来自 APP 渲染进程的窗口控制请求（隐藏/显示）
+ * @listens ipcMain.handle('app-window-control')
+ * @param {object} args - IPC 参数
+ * @param {string} args.appId - 应用 ID
+ * @param {string} args.action - 操作类型：'hide' | 'show'
+ */
+function initWindowControlIpcHandlers() {
+    const { BrowserWindow } = require('electron');
+    const appWindowManager = require('@modules/canbox/integrated/appWindowManager');
+
+    ipcMain.handle('app-window-control', async (event, args) => {
+        try {
+            const { appId, action } = args;
+            if (!appId) {
+                return { success: false, msg: 'appId is required' };
+            }
+
+            // 优先从集成模式 appWindowManager 查找（窗口模式）
+            let win = appWindowManager.winMap.get(appId);
+
+            // 子进程模式下 fallback：通过 event.sender 直接获取本进程内的窗口
+            if (!win || win.isDestroyed()) {
+                win = BrowserWindow.fromWebContents(event.sender);
+            }
+
+            if (!win || win.isDestroyed()) {
+                return { success: false, msg: 'window not found or destroyed' };
+            }
+
+            switch (action) {
+                case 'hide':
+                    win.hide();
+                    break;
+                case 'show':
+                    win.show();
+                    win.focus();
+                    break;
+                default:
+                    return { success: false, msg: `unknown action: ${action}` };
+            }
+            logger.debug('[api.js] app-window-control: {} {} done', action, appId);
+            return { success: true };
+        } catch (error) {
+            logger.error('[api.js] app-window-control failed:', error.message);
+            return { success: false, msg: error.message };
+        }
+    });
+}
+
+/**
  * 统一初始化所有 IPC 消息处理逻辑
  */
 function initApiIpcHandlers() {
@@ -344,6 +437,8 @@ function initApiIpcHandlers() {
     initSudoIpcHandlers();
     initI18nIpcHandlers();
     initOpenUrlIpcHandlers();
+    initShortcutIpcHandlers();
+    initWindowControlIpcHandlers();
 }
 
 module.exports = initApiIpcHandlers;
