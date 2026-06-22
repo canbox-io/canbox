@@ -37,6 +37,7 @@
         :show-pack="true"
         :show-run="true"
         :show-clear="true"
+        :show-open-data-dir="true"
         :show-delete="true"
         :loading="exportAppFlag[uid]"
         :loading-text="exportAppFlag[uid] ? t('devApp.packing') : ''"
@@ -45,6 +46,7 @@
         @clear="clearData"
         @delete="removeApp"
         @show-info="showAppDevInfo"
+        @open-data-dir="openAppDataDir"
       />
     </div>
 
@@ -306,6 +308,18 @@ async function downloadCanboxTS() {
   } catch (error) {
     console.error('下载 canbox.d.ts 失败:', error)
     notification.error(t('devApp.downloadFailed') + error.message)
+  }
+}
+
+// 打开APP数据目录
+async function openAppDataDir(uid) {
+  try {
+    const result = await window.api.app.openDataDir(uid)
+    if (!result.success) {
+      notification.error(result.msg)
+    }
+  } catch (error) {
+    notification.error(t('appList.openDataDirFailed') + error.message)
   }
 }
 

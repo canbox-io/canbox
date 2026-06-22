@@ -21,7 +21,7 @@
         "packApp": "打包 APP",
         "runApp": "运行这个开发中的 APP",
         "clearData": "清除用户数据",
-        "removeApp": "移除这个开发中的 app",
+        "removeApp": "移除这个开发中的 APP",
         "viewDevDoc": "APP 开发文档",
         "viewApiDoc": "API 文档",
         "downloadCanboxTypes": "下载 canbox.d.ts",
@@ -46,7 +46,7 @@
         "loading": "加载中...",
         "save": "保存",
         "delete": "删除",
-    "removeApp": "移除这个 APP",
+        "removeApp": "移除这个 APP",
         "edit": "编辑",
         "add": "添加",
         "import": "导入",
@@ -146,7 +146,7 @@
         "versionHistory": "版本记录",
         "runApp": "运行这个app",
         "clearData": "清除用户数据",
-        "removeApp": "移除这个app",
+        "removeApp": "移除这个 APP",
         "clearDataSuccess": "清除数据成功",
         "removeSuccess": "APP 删除成功",
         "selectFile": "选择应用文件",
@@ -161,7 +161,9 @@
         "downloaded": "已下载",
         "exportApp": "导出 APP",
         "exportSuccess": "应用导出成功！",
-        "exportFailed": "导出应用失败："
+        "exportFailed": "导出应用失败：",
+        "openDataDir": "打开 APP 数据目录",
+        "openDataDirFailed": "打开数据目录失败："
     },
     "appRepo": {
         "addSource": "添加 APP 源",

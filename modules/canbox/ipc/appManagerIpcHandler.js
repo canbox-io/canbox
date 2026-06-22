@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const fse = require('fs-extra');
 const originalFs = require('original-fs');
+const { shell } = require('electron');
 const { getAppsStore, getAppsDevStore } = require('@modules/canbox/main/storageManager');
 const { getAppPath, getAppDataPath } = require('@modules/canbox/main/pathManager');
 const { handleError } = require('@modules/canbox/ipc/errorHandler');
@@ -508,6 +509,36 @@ class AppManagerIpcHandler {
                 return getAppDevInfo(uid);
             } catch (error) {
                 return handleError(error, 'getAppDevInfo');
+            }
+        });
+
+        // 打开 APP 数据目录
+        this.handlers.set('openAppDataDir', async (event, id) => {
+            try {
+                if (!id) {
+                    return { success: false, msg: '应用 ID 不能为空' };
+                }
+
+                const appDataPath = path.join(getAppDataPath(), id);
+
+                // 确保目录存在
+                if (!fs.existsSync(appDataPath)) {
+                    fs.mkdirSync(appDataPath, { recursive: true });
+                    logger.info('APP data directory created: {}', appDataPath);
+                }
+
+                // 使用 shell.openPath 打开目录（跨平台）
+                const errorMsg = await shell.openPath(appDataPath);
+                if (errorMsg) {
+                    logger.error('Failed to open APP data dir: {}, error: {}', appDataPath, errorMsg);
+                    return { success: false, msg: errorMsg };
+                }
+
+                logger.info('Opened APP data directory: {}', appDataPath);
+                return { success: true };
+            } catch (error) {
+                logger.error('Failed to open APP data dir for: {}, error:', id, error);
+                return { success: false, msg: error.message };
             }
         });
 

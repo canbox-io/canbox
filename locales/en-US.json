@@ -145,7 +145,7 @@
         "versionHistory": "Version History",
         "runApp": "Run this app",
         "clearData": "Clear user data",
-        "removeApp": "Remove this app",
+        "removeApp": "Remove this APP",
         "clearDataSuccess": "Clear data successful",
         "removeSuccess": "APP removed successfully",
         "selectFile": "Select app file",
@@ -160,7 +160,9 @@
         "downloaded": "Downloaded",
         "exportApp": "Export App",
         "exportSuccess": "App exported successfully!",
-        "exportFailed": "Export failed: "
+        "exportFailed": "Export failed: ",
+        "openDataDir": "Open Data Directory",
+        "openDataDirFailed": "Failed to open data directory: "
     },
     "appRepo": {
         "addSource": "Add Source",

@@ -134,6 +134,9 @@ contextBridge.exposeInMainWorld(
                     console.info('应用删除失败: ', err);
                     fn({success: false, msg: '应用删除失败！' + err.message});
                 })
+            },
+            openDataDir: (id) => {
+                return ipcRenderer.invoke('openAppDataDir', id);
             }
         },
         appDev: {

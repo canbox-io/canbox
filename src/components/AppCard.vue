@@ -68,6 +68,13 @@
                             </button>
                         </el-tooltip>
 
+                        <!-- 打开数据目录按钮 -->
+                        <el-tooltip v-if="showOpenDataDir" :content="$t('appList.openDataDir')" placement="top" popper-class="app-card-tooltip">
+                            <button class="icon-btn open-data-dir-btn" @click="$emit('open-data-dir', uid)">
+                                {{ getActionIcon('openDataDir') }}
+                            </button>
+                        </el-tooltip>
+
                         <!-- 导出按钮（我的APP） -->
                         <el-tooltip v-if="showExport" :content="$t('appList.exportApp')" placement="top" popper-class="app-card-tooltip">
                             <button class="icon-btn export-btn" @click="$emit('export', uid)">
@@ -174,6 +181,10 @@ const props = defineProps({
         type: Boolean,
         default: false
     },
+    showOpenDataDir: {
+        type: Boolean,
+        default: false
+    },
     showDelete: {
         type: Boolean,
         default: true
@@ -205,7 +216,7 @@ const props = defineProps({
     }
 })
 
-defineEmits(['run', 'delete', 'clear', 'pack', 'copy', 'download', 'update', 'export', 'show-info'])
+defineEmits(['run', 'delete', 'clear', 'pack', 'copy', 'download', 'update', 'export', 'show-info', 'open-data-dir'])
 
 // Logo URL
 const logoUrl = computed(() => {
@@ -450,6 +461,10 @@ const allTagsTooltip = computed(() => {
 
 .clear-btn:hover {
     background: #fff3e0;
+}
+
+.open-data-dir-btn:hover {
+    background: #e0f2f1;
 }
 
 .export-btn:hover {

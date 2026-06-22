@@ -60,7 +60,8 @@ export const ACTION_ICONS = {
   download: '⬇️',
   update: '🔄',
   downloaded: '✅',
-  export: '📤'
+  export: '📤',
+  openDataDir: '📂'
 }
 
 // 功能按钮名称（用于 tooltip）
@@ -73,7 +74,8 @@ export const ACTION_NAMES = {
   download: '下载',
   update: '更新',
   downloaded: '已下载',
-  export: '导出'
+  export: '导出',
+  openDataDir: '打开数据目录'
 }
 
 /**
