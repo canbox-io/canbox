@@ -5,6 +5,20 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.6.0] - 2026-06-22
+
+### feat | 新功能 / Features
+
+支持 APP 全局快捷键
+
+Support APP global shortcut
+
+### refactor | 重构 / Refactoring
+
+重命名 shortcutManager 为 appLauncherManager
+
+Rename shortcutManager to appLauncherManager
+
 ## [0.5.9] - 2026-06-09
 
 ### feat | 新功能 / Features
