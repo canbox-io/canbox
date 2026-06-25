@@ -96,7 +96,7 @@ Comment=${appItem.description || ''}
 Exec="${execPath}" --no-sandbox --app-id=${uid} --class=canbox-app-${uid} --wm-class=canbox-app-${uid} --wm_class=canbox-app-${uid} --app-name=${appItem.name || uid}
 Icon=${iconPath}
 Type=Application
-StartupWMClass=${uid}
+StartupWMClass=canbox-app-${uid}
 `;
                 fs.writeFileSync(launcherPath, desktopFile);
             }
@@ -138,7 +138,7 @@ function deleteLaunchers(appsData) {
             if (fs.existsSync(launcherPath)) {
                 fs.unlinkSync(launcherPath);
             }
-            
+
             // 删除缓存的图标文件
             const iconExt = path.extname(appItem.logo).toLowerCase();
             // 删除可能的图标文件格式（ICO 或原始格式）
@@ -167,7 +167,7 @@ function deleteLaunchers(appsData) {
 
 /**
  * 是否需要重新生成快捷方式
- * 
+ *
  * @returns {boolean} - true：需要，false：不需要
  */
 const needRegenerateLaunchers = () => {
