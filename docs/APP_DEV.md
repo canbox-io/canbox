@@ -235,6 +235,105 @@ If you need to open a URL within an Electron window (instead of the default brow
 canbox.win.createWindow({}, { url: 'https://example.com', title: 'Docs' });
 ```
 
+# Global Shortcut
+
+**Supported platforms**: linux (x11)
+
+Provides system-level global shortcut registration/unregistration capabilities. The shortcut mapping is persisted to `canbox.json` and automatically restored when Canbox restarts. APP developers only need to call `onTriggered()` to set up event listeners on each launch.
+
+Two trigger modes:
+- **`focus`** (default): Focus or launch the APP window when the shortcut is pressed. Suitable for quick-launch apps.
+- **`callback`**: Send an IPC event to the APP renderer process. Suitable for tool-type apps (screenshot, voice input, etc.).
+
+## canbox.shortcut.register(accelerator, options?)
+
+Register a global shortcut.
+
+- Parameters
+  1. `string` accelerator - Electron accelerator string, e.g. `'Alt+Space'`, `'CommandOrControl+X'`
+  2. `object` [options] - Optional configuration
+     - `mode` `'focus' | 'callback'` - Trigger mode (default `'focus'`)
+- Returns `Promise<object>`
+  - `success: true` - Registration successful
+  - `success: false` + `reason: 'occupied'` - Shortcut is occupied by another APP, `occupiedBy` contains the app name
+  - `success: false` + `reason: 'system-occupied'` - Shortcut is occupied by the system or another application
+
+```javascript
+// Focus mode (default)
+canbox.shortcut.register('Alt+Space', { mode: 'focus' })
+    .then(result => {
+        console.info('Registration result:', result);
+    });
+
+// Event callback mode
+canbox.shortcut.register('Alt+X', { mode: 'callback' })
+    .then(result => {
+        console.info('Registration result:', result);
+    });
+
+// Conflict detection
+canbox.shortcut.register('Alt+Space')
+    .then(result => {
+        if (!result.success && result.reason === 'occupied') {
+            console.warn('Shortcut is occupied by: ' + result.occupiedBy);
+        }
+    });
+```
+
+**Note**: The shortcut mapping is persisted. After registering once, the shortcut will still work after Canbox restarts. You only need to set up the `onTriggered` listener each time the APP launches.
+
+## canbox.shortcut.unregister(accelerator)
+
+Unregister a global shortcut.
+
+- Parameters
+  1. `string` accelerator - Electron accelerator string
+- Returns `Promise<object>`
+  - `success: true` - Unregistration successful
+
+```javascript
+canbox.shortcut.unregister('Alt+Space')
+    .then(result => {
+        console.info('Shortcut unregistered:', result);
+    });
+```
+
+## canbox.shortcut.isRegistered(accelerator)
+
+Check if a shortcut is already registered.
+
+- Parameters
+  1. `string` accelerator - Electron accelerator string
+- Returns `Promise<boolean>` - Whether the shortcut is registered
+
+```javascript
+canbox.shortcut.isRegistered('Alt+Space')
+    .then(registered => {
+        console.info('Is shortcut registered:', registered);
+    });
+```
+
+## canbox.shortcut.onTriggered(callback)
+
+Listen for shortcut trigger events (callback mode).
+
+- Parameters
+  1. `function` callback - Callback function when the shortcut is triggered, receives `accelerator` string as parameter
+
+```javascript
+// Register a shortcut in callback mode
+canbox.shortcut.register('Alt+X', { mode: 'callback' })
+    .then(() => {
+        // Set up the event listener
+        canbox.shortcut.onTriggered((accelerator) => {
+            console.log('Shortcut triggered:', accelerator);
+            // Execute custom logic, e.g. screenshot, voice input, etc.
+        });
+    });
+```
+
+**Note**: `onTriggered` should be called at APP startup to re-set the listener (callbacks are not persisted, only the accelerator → appId mapping is).
+
 # cb.build.json
 
 Canbox uses asar for packaging. Packaging is performed according to `cb.build.json` content:
