@@ -35,7 +35,7 @@ canbox/
 
 ```bash
 # 1 Clone the project
-git clone https://github.com/rexlevin/canbox.git
+git clone https://github.com/canbox-io/canbox.git
 
 # 2 Install dependencies
 npm install
@@ -225,7 +225,7 @@ await window.api.font.set('"Microsoft YaHei", sans-serif');
 {
     "default": {
         "3a6f487d7f9f4fae86dcfbc3dde401a2": {
-            "id": "com.gitee.lizl6.cb-jsonbox",
+            "id": "com.github.lizl6.cb-jsonbox",
             "name": "jsonbox",
             "version": "0.0.1",
             "description": "JsonBox - Cross-platform JSON formatting tool",
@@ -233,7 +233,7 @@ await window.api.font.set('"Microsoft YaHei", sans-serif');
             "logo": "logo.png"
         },
         "885f615f9c374c96a022294950fed558": {
-            "id": "com.gitee.lizl6.cb-passgen",
+            "id": "com.github.lizl6.cb-passgen",
             "name": "passgen",
             "version": "0.0.2",
             "description": "PassGen - Password generator",
@@ -282,9 +282,9 @@ await window.api.font.set('"Microsoft YaHei", sans-serif');
 {
     "default": {
         "3a6f487d7f9f4fae86dcfbc3dde401a2": {
-            "id": "com.gitee.lizl6.cb-jsonbox",
+            "id": "com.github.lizl6.cb-jsonbox",
             "name": "jsonbox",
-            "repo": "https://gitee.com/rexlevin/cb-jsonbox",
+            "repo": "https://github.com/lizl6/cb-jsonbox",
             "branch": "master",
             "author": "lizl6",
             "version": "0.0.2",

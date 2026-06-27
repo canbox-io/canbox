@@ -18,7 +18,7 @@ class GitHubProvider extends BaseProvider {
     constructor(options = {}) {
         super({
             name: 'github',
-            owner: options.owner || 'rexlevin',
+            owner: options.owner || 'canbox-io',
             repo: options.repo || 'canbox',
             ...options
         });

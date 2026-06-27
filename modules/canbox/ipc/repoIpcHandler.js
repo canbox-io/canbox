@@ -199,9 +199,9 @@ async function handleAddAppRepo(repoUrl) {
 {
     "default": {
         "3a6f487d7f9f4fae86dcfbc3dde401a2": {
-            "id": "com.gitee.lizl6.cb-jsonbox",
+            "id": "com.github.lizl6.cb-jsonbox",
             "name": "jsonbox",
-            "repo": "https://gitee.com/rexlevin/cb-jsonbox",
+            "repo": "https://github.com/lizl6/cb-jsonbox",
             "branch": "master",
             "author": "lizl6",
             "version": "0.0.1",

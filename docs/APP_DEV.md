@@ -137,7 +137,7 @@ WebApp is a special type of APP that wraps a webpage as a standalone desktop app
 
 | Field | Parent | Type | Constraint | Description |
 |-------|--------|------:|:----------:|-------------|
-| id | | string | 1 | App application identifier<br>1. Multi-segment composition, such as: `com.gitee.dev001.clipboard`<br>2. Each segment consists of lowercase letters and numbers, starting with a lowercase letter<br>3. Only the last segment can use the `-` symbol |
+| id | | string | 1 | App application identifier<br>1. Multi-segment composition, such as: `com.github.dev001.clipboard`<br>2. Each segment consists of lowercase letters and numbers, starting with a lowercase letter<br>3. Only the last segment can use the `-` symbol |
 | type | | string | * | APP type. `"webapp"` indicates a web application where `main` points to an HTTP URL. Omit or leave empty for standard local APPs |
 | alias | | string | * | English alias for the APP name. Used in shortcut naming for non-ASCII named apps (e.g. Chinese names), making them searchable in launcher tools. Auto-extracted from URL domain for WebApps |
 | webappOptions | | object | * | WebApp-specific options, only valid when `type` is `"webapp"` |

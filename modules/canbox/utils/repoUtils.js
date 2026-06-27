@@ -44,10 +44,6 @@ exports.getFileUrl = function (repoUrl, branch, file) {
         else if (host.includes('bitbucket.org')) {
             return `${cleanRepoUrl}/raw/${branch}/${file}`;
         }
-        // Gitee
-        else if (host.includes('gitee.com')) {
-            return `${cleanRepoUrl}/raw/${branch}/${file}`;
-        }
         // 自托管服务（如Gitea/GitLab CE）
         else {
             // 尝试常见模式
@@ -93,10 +89,6 @@ exports.getDownloadUrl = function (repo, version, fileName) {
         // Bitbucket
         else if (host.includes('bitbucket.org')) {
             return `${cleanRepo}/downloads/${fileName}`;
-        }
-        // Gitee
-        else if (host.includes('gitee.com')) {
-            return `${cleanRepo}/releases/download/${version}/${fileName}`;
         }
         // 自托管服务（如 Gitea/GitLab CE）
         else {

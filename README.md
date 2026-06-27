@@ -10,7 +10,7 @@
 
 **Canbox** has no server and can:
 
-1. Share apps through GitHub, Gitee, etc.
+1. Share apps through GitHub, etc.
 2. Import application packages packaged by developers
 3. Develop your own apps and package them for sharing with others
 
@@ -38,7 +38,7 @@ Canbox is an open project, and every contribution helps make it better!
 - **WebApp Creation**: Create desktop web apps from any URL, with automatic site info scraping, navigation controls, and alias support.
 - **Multi-platform Support**: Based on Electron, supports Linux, Windows (not fully tested), and macOS (I don't have a Mac 😢, waiting for someone with a Mac to do this 😆)
 - **App Import & Export**: Supports importing offline application packages and exporting installed apps for sharing.
-- **Auto Update**: Automatic update checking with GitHub and Gitee dual sources, configurable check frequency.
+- **Auto Update**: Automatic update checking with GitHub, configurable check frequency.
 - **Customization**: Configurable language, font, data path, and window zoom (0.5x ~ 2.0x).
 - **Log Viewer**: Built-in log viewer with real-time monitoring, filtering, search, and export capabilities.
 - **File Task Management**: Unified management for download, import, export, and other file operations.
@@ -97,7 +97,7 @@ Enter the Repo URL in "App Repository" -> "Add App Source" to add an app source.
 | JsonBox | https://github.com/rexlevin/cb-jsonbox | JSON formatting, JSON to other formats like xml, yaml |
 | PassGen | https://github.com/rexlevin/cb-passgen | Generate passwords, random strings, timestamps        |
 
-For more apps, please visit: [Canbox App Center](https://rexlevin.github.io/canbox-pages/apps.html)
+For more apps, please visit: [Canbox App Center](https://canbox-io.github.io/canbox-pages/apps.html)
 
 ### Export App Source List
 

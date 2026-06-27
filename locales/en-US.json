@@ -131,7 +131,6 @@
         "chromeVersion": "Chrome Version",
         "electronVersion": "Electron Version",
         "githubRepo": "GitHub Repository",
-        "giteeRepo": "Gitee Repository",
         "viewLicense": "View License"
     },
     "appList": {

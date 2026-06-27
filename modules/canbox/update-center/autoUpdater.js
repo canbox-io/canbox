@@ -211,7 +211,7 @@ class AutoUpdater {
         logger.info('[AutoUpdater] 基于语言推荐: {} - {}', recommended.source, recommended.reason);
 
         const bestSource = await getBestSource({
-            githubOwner: 'rexlevin',
+            githubOwner: 'canbox-io',
             githubRepo: 'canbox'
         });
 
@@ -231,8 +231,8 @@ class AutoUpdater {
      */
     _setFeedURL(source) {
         const providers = {
-            github: new GitHubProvider({ owner: 'rexlevin', repo: 'canbox' }),
-            mirror: new MirrorProvider({ owner: 'rexlevin', repo: 'canbox' })
+            github: new GitHubProvider({ owner: 'canbox-io', repo: 'canbox' }),
+            mirror: new MirrorProvider({ owner: 'canbox-io', repo: 'canbox' })
         };
 
         const provider = providers[source];
@@ -467,7 +467,7 @@ class AutoUpdater {
         const config = await getConfig();
         const recommended = await getRecommendedSource();
         const bestSource = await getBestSource({
-            githubOwner: 'rexlevin',
+            githubOwner: 'canbox-io',
             githubRepo: 'canbox'
         });
 

@@ -25,7 +25,7 @@ class MirrorProvider extends BaseProvider {
     constructor(options = {}) {
         super({
             name: 'mirror',
-            owner: options.owner || 'rexlevin',
+            owner: options.owner || 'canbox-io',
             repo: options.repo || 'canbox',
             ...options
         });
@@ -89,7 +89,7 @@ class MirrorProvider extends BaseProvider {
      * @returns {Promise<MirrorProvider|null>}
      */
     static async findBestMirror(options = {}, timeout = 5000) {
-        const owner = options.owner || 'rexlevin';
+        const owner = options.owner || 'canbox-io';
         const repo = options.repo || 'canbox';
 
         logger.info('[MirrorProvider] 开始测试 {} 个代理', MIRROR_LIST.length);

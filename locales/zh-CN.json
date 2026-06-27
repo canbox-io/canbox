@@ -132,7 +132,6 @@
         "chromeVersion": "Chrome 版本",
         "electronVersion": "Electron 版本",
         "githubRepo": "GitHub 仓库",
-        "giteeRepo": "Gitee 仓库",
         "viewLicense": "查看许可证"
     },
     "appList": {

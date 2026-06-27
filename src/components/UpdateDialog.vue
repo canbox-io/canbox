@@ -246,7 +246,7 @@ const isUpdateReady = computed(() => {
 
 const releaseUrl = computed(() => {
   if (props.updateInfo?.releaseName) {
-    return `https://github.com/rexlevin/canbox/releases/tag/${props.updateInfo.releaseName}`;
+    return `https://github.com/canbox-io/canbox/releases/tag/${props.updateInfo.releaseName}`;
   }
   return '';
 });
@@ -290,7 +290,7 @@ const renderReleaseNotes = (notes) => {
 
 const openReleaseUrl = () => {
   if (props.updateInfo?.releaseName && window.api?.openUrl) {
-    const url = `https://github.com/rexlevin/canbox/releases/tag/${props.updateInfo.releaseName}`;
+    const url = `https://github.com/canbox-io/canbox/releases/tag/${props.updateInfo.releaseName}`;
     window.api.openUrl(url);
   }
 };

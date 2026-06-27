@@ -21,7 +21,7 @@
         "build-appimage": "electron-builder -l"
     },
     "build": {
-        "appId": "com.github.lizl6.canbox",
+        "appId": "com.github.canbox-io.canbox",
         "artifactName": "${productName}-${os}-${arch}.${ext}",
         "asar": true,
         "files": [

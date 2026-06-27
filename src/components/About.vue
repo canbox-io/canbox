@@ -202,16 +202,12 @@ onMounted(async () => {
 });
 
 const openGithub = () => {
-    window.api.openUrl('https://github.com/rexlevin/canbox');
-};
-
-const openGitee = () => {
-    window.api.openUrl('https://gitee.com/rexlevin/canbox');
+    window.api.openUrl('https://github.com/canbox-io/canbox');
 };
 
 const openLicense = async () => {
     // 直接打开 GitHub 上的许可证文件
-    window.api.openUrl('https://github.com/rexlevin/canbox/blob/main/LICENSE');
+    window.api.openUrl('https://github.com/canbox-io/canbox/blob/main/LICENSE');
 };
 
 // 处理升级按钮点击
@@ -288,7 +284,7 @@ const handleInstallUpdate = async () => {
 // 处理手动下载
 const handleManualDownload = () => {
     // 跳转到 GitHub Releases latest
-    window.api.openUrl('https://github.com/rexlevin/canbox/releases/latest');
+    window.api.openUrl('https://github.com/canbox-io/canbox/releases/latest');
 };
 </script>
 

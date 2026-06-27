@@ -52,7 +52,7 @@ async function testAllSources(options = {}, timeout = 5000) {
     }
 
     providers.push(new MirrorProvider({
-        owner: options.githubOwner || 'rexlevin',
+        owner: options.githubOwner || 'canbox-io',
         repo: options.githubRepo || 'canbox'
     }));
 
