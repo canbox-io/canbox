@@ -37,8 +37,11 @@
           sourceTag: appItem.sourceTag
         }"
         :uid="uid"
-        :show-export="true"
-        :show-open-data-dir="true"
+        :show-run="true"
+        :show-clear="true"
+        :show-delete="true"
+        :show-export="appItem.appJson?.type !== 'webapp'"
+        :show-open-data-dir="appItem.appJson?.type !== 'webapp'"
         @run="loadApp"
         @delete="removeApp"
         @clear="clearData"

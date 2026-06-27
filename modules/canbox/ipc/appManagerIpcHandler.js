@@ -4,7 +4,7 @@ const fse = require('fs-extra');
 const originalFs = require('original-fs');
 const { shell } = require('electron');
 const { getAppsStore, getAppsDevStore } = require('@modules/canbox/main/storageManager');
-const { getAppPath, getAppDataPath } = require('@modules/canbox/main/pathManager');
+const { getAppPath, getAppDataPath, getUserDataPath } = require('@modules/canbox/main/pathManager');
 const { handleError } = require('@modules/canbox/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
 const { handleImportApp, getAppInfo, getAppDevInfo } = require('@modules/canbox/main/appManager');
@@ -393,6 +393,17 @@ class AppManagerIpcHandler {
                     } catch (error) {
                         logger.warn(`删除应用快捷方式异常: ${id}, ${error}`);
                     }
+
+                    // 删除 WebApp 的 partition 目录
+                    try {
+                        const partitionPath = path.join(getUserDataPath(), 'Partitions', id);
+                        if (fs.existsSync(partitionPath)) {
+                            originalFs.rmSync(partitionPath, { recursive: true, force: true });
+                            logger.info(`WebApp partition 目录已删除: ${partitionPath}`);
+                        }
+                    } catch (error) {
+                        logger.warn(`删除 WebApp partition 目录失败: ${id}, ${error}`);
+                    }
                 }
 
                 // 清除该 APP 注册的全局快捷键
@@ -447,21 +458,47 @@ class AppManagerIpcHandler {
                     return handleError(new Error('应用 ID 不能为空'), 'clearAppData');
                 }
 
-                // 获取应用名称用于操作历史记录
+                // 获取应用配置
                 const appsData = getAppsStore().get('default') || {};
                 const appItem = appsData[id];
                 const appName = appItem?.appJson?.name || appItem?.name || id;
 
-                const appDataPath = path.join(getAppDataPath(), id);
+                // 判断是否为 WebApp
+                let isWebApp = false;
+                try {
+                    const appJsonPath = path.join(getAppPath(), id + '.asar/app.json');
+                    const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
+                    const appJson = JSON.parse(appJsonContent);
+                    isWebApp = appJson.type === 'webapp';
+                } catch (error) {
+                    logger.warn(`无法读取应用 ${id} 的 app.json，假设为普通应用:`, error.message);
+                }
+
                 let clearedSize = 0;
 
-                // 计算要清理的数据大小
-                if (fs.existsSync(appDataPath)) {
-                    clearedSize = getDirSize(appDataPath);
-                    originalFs.rmSync(appDataPath, { recursive: true, force: true });
-                    logger.info(`应用数据已清除: ${appDataPath}, size: ${clearedSize}`);
+                if (isWebApp) {
+                    // WebApp：清除 session 存储数据
+                    try {
+                        const { session } = require('electron');
+                        const part = session.fromPartition('persist:' + id);
+                        await part.clearStorageData();
+                        logger.info(`WebApp session 数据已清除: ${id}`);
+                    } catch (error) {
+                        logger.error(`清除 WebApp session 数据失败: ${id}`, error);
+                        throw error;
+                    }
                 } else {
-                    logger.info(`应用数据目录不存在: ${appDataPath}`);
+                    // 普通 APP：删除数据目录
+                    const appDataPath = path.join(getAppDataPath(), id);
+
+                    // 计算要清理的数据大小
+                    if (fs.existsSync(appDataPath)) {
+                        clearedSize = getDirSize(appDataPath);
+                        originalFs.rmSync(appDataPath, { recursive: true, force: true });
+                        logger.info(`应用数据已清除: ${appDataPath}, size: ${clearedSize}`);
+                    } else {
+                        logger.info(`应用数据目录不存在: ${appDataPath}`);
+                    }
                 }
 
                 // 清除窗口状态
@@ -484,7 +521,9 @@ class AppManagerIpcHandler {
                         // clearedSize: 清理的数据大小（字节）
                         clearedSize: clearedSize,
                         // clearedSizeStr: 清理的数据大小（格式化字符串）
-                        clearedSizeStr: clearedSize > 0 ? formatSize(clearedSize) : '0 B'
+                        clearedSizeStr: clearedSize > 0 ? formatSize(clearedSize) : '0 B',
+                        // isWebApp: 是否为 WebApp
+                        isWebApp: isWebApp
                     }
                 }, () => {});
 
