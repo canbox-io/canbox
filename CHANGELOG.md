@@ -5,6 +5,44 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.6.2] - 2026-06-27
+
+### feat | 新功能 / Features
+
+添加打开 APP 数据目录功能
+
+Add open app data directory feature
+
+### fix | 问题修复 / Bug Fixes
+
+卸载与清除应用时保留数据目录
+正确处理 WebApp 数据清理与卸载逻辑
+修复 StartupWMClass 与窗口类名不匹配导致启动器图标异常
+
+Preserve data directory when uninstalling and clearing apps
+Correctly handle WebApp data cleanup and uninstall logic
+Fix StartupWMClass and window class name mismatch
+
+### docs | 文档 / Documentation
+
+移除文档路径中的 development 目录
+添加全局快捷键 API 文档
+
+Remove development directory from documentation paths
+Add global shortcut API documentation
+
+### refactor | 重构 / Refactoring
+
+移除 Gitee 支持并迁移至 canbox-io 组织
+
+Remove Gitee support and migrate to canbox-io organization
+
+### chore | 维护 / Maintenance
+
+更新包作者为 canbox-io
+
+Update package author to canbox-io
+
 ## [0.6.0] - 2026-06-22
 
 ### feat | 新功能 / Features
