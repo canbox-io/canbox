@@ -404,6 +404,17 @@ class AppManagerIpcHandler {
                     } catch (error) {
                         logger.warn(`删除 WebApp partition 目录失败: ${id}, ${error}`);
                     }
+
+                    // 删除普通 APP 数据目录
+                    try {
+                        const appDataPath = path.join(getAppDataPath(), id);
+                        if (fs.existsSync(appDataPath)) {
+                            originalFs.rmSync(appDataPath, { recursive: true, force: true });
+                            logger.info(`应用数据目录已删除: ${appDataPath}`);
+                        }
+                    } catch (error) {
+                        logger.warn(`删除应用数据目录失败: ${id}, ${error}`);
+                    }
                 }
 
                 // 清除该 APP 注册的全局快捷键
@@ -488,13 +499,18 @@ class AppManagerIpcHandler {
                         throw error;
                     }
                 } else {
-                    // 普通 APP：删除数据目录
+                    // 普通 APP：清除数据目录内容，保留目录本身
                     const appDataPath = path.join(getAppDataPath(), id);
 
                     // 计算要清理的数据大小
                     if (fs.existsSync(appDataPath)) {
                         clearedSize = getDirSize(appDataPath);
-                        originalFs.rmSync(appDataPath, { recursive: true, force: true });
+                        // 清空目录内容，保留目录本身
+                        const entries = fs.readdirSync(appDataPath);
+                        for (const entry of entries) {
+                            const entryPath = path.join(appDataPath, entry);
+                            originalFs.rmSync(entryPath, { recursive: true, force: true });
+                        }
                         logger.info(`应用数据已清除: ${appDataPath}, size: ${clearedSize}`);
                     } else {
                         logger.info(`应用数据目录不存在: ${appDataPath}`);
