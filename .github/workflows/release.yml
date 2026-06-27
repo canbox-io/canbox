@@ -139,6 +139,7 @@ jobs:
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "v${{ steps.changelog.outputs.version }}"
           name: "Canbox v${{ steps.changelog.outputs.version }}"
           body: ${{ steps.changelog.outputs.notes }}
           files: |
