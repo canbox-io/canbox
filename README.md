@@ -210,9 +210,9 @@ Configuration description:
 
 For detailed development guides, please refer to:
 
-- [Canbox Development Documentation](./docs/development/CANBOX_DEV.md)
-- [App Development Documentation](./docs/development/APP_DEV.md)
-- [API Documentation](./docs/development/API.md)
+- [Canbox Development Documentation](./docs/CANBOX_DEV.md)
+- [App Development Documentation](./docs/APP_DEV.md)
+- [API Documentation](./docs/API.md)
 
 ## Settings
 

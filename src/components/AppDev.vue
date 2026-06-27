@@ -276,7 +276,7 @@ const renderedHistory = computed(() => {
 // 打开APP开发文档
 async function openAppDevDoc() {
   const isChinese = locale.value === 'zh-CN'
-  const docPath = isChinese ? 'docs/development/APP_DEV_CN.md' : 'docs/development/APP_DEV.md'
+  const docPath = isChinese ? 'docs/APP_DEV_CN.md' : 'docs/APP_DEV.md'
   const docTitle = isChinese ? 'APP 开发文档' : 'APP Development Documentation'
   await renderAndOpenMarkdown(docPath, docTitle, { maxContentWidth: 1100 })
 }
@@ -284,7 +284,7 @@ async function openAppDevDoc() {
 // 打开API文档
 async function openApiDoc() {
   const isChinese = locale.value === 'zh-CN'
-  const docPath = isChinese ? 'docs/development/API_CN.md' : 'docs/development/API.md'
+  const docPath = isChinese ? 'docs/API_CN.md' : 'docs/API.md'
   const docTitle = isChinese ? 'API 文档' : 'API Documentation'
   await renderAndOpenMarkdown(docPath, docTitle)
 }
