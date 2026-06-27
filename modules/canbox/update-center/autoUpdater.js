@@ -198,7 +198,7 @@ class AutoUpdater {
      */
     async _selectSource() {
         const config = await getConfig();
-        const manualSource = config.updateSource;
+        const manualSource = config.updateSource || 'auto';
 
         if (manualSource !== 'auto') {
             logger.info('[AutoUpdater] 用户手动设置更新源: {}', manualSource);
