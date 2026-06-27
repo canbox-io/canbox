@@ -20,6 +20,9 @@ on:
           - windows
           - darwin
 
+permissions:
+  contents: write
+
 jobs:
   # Linux 构建 job
   build-linux:
