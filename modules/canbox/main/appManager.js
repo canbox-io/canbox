@@ -11,6 +11,7 @@ const DateFormat = require('@modules/utils/DateFormat');
 const logger = require('@modules/utils/logger');
 const fsUtils = require('@modules/canbox/utils/fs-utils');
 const FileTaskManager = require('@modules/canbox/file-task/file-task-manager');
+const { generateLaunchers } = require('@modules/canbox/main/appLauncherManager');
 
 // 注册 app-import 执行器
 FileTaskManager.getInstance().registerExecutor('app-import', async (task) => {
@@ -334,6 +335,7 @@ async function importAppFromZip(task, zipPath, uid) {
         appsConfig[uid] = {
             id: appJson.id || '',
             name: appJson.name || '',
+            alias: appJson.alias || '',
             version: appJson.version || '',
             description: appJson.description || '',
             author: appJson.author || '',
@@ -371,6 +373,9 @@ async function importAppFromZip(task, zipPath, uid) {
         }
 
         taskManager.updateProgress(task.id, 100, '导入完成 / Import completed', 0);
+
+        // 自动为该 APP 生成 launcher（快捷方式/desktop文件）
+        generateLaunchers({ [uid]: appsConfig[uid] });
 
         return { success: true, uuid: uid };
 

@@ -7,6 +7,7 @@ const logger = require('@modules/utils/logger');
 const { getAppPath } = require('@modules/canbox/main/pathManager');
 const { getAppsStore } = require('@modules/canbox/main/storageManager');
 const { downloadIcon } = require('./website-scraper');
+const { generateLaunchers } = require('@modules/canbox/main/appLauncherManager');
 
 const DEFAULT_ICON_PATH = path.join(__dirname, 'default-icon.png');
 
@@ -127,6 +128,9 @@ async function createWebApp(options) {
         getAppsStore().set('default', appsConfig);
 
         logger.info('WebApp created successfully: {} ({})', name, uid);
+
+        // 自动为该 WebApp 生成 launcher（快捷方式/desktop文件）
+        generateLaunchers({ [uid]: appsConfig[uid] });
 
         return { success: true, uid: uid, appId: appId };
     } catch (error) {
